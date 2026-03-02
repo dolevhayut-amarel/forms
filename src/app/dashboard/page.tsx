@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/dashboard/empty-state"
 import { createClient } from "@/lib/supabase/server"
 import { rowToForm } from "@/lib/types"
 
+export const dynamic = "force-dynamic"
 export const metadata: Metadata = { title: "Dashboard" }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

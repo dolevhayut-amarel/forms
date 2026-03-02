@@ -4,6 +4,8 @@ import { FormRenderer } from "@/components/form-renderer/form-renderer"
 import { createClient } from "@/lib/supabase/server"
 import { rowToForm } from "@/lib/types"
 
+export const dynamic = "force-dynamic"
+
 interface Props {
   params: Promise<{ id: string }>
 }

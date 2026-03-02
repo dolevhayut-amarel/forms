@@ -11,6 +11,8 @@ import { CopyLinkButton } from "@/components/results/copy-link-button"
 import { createClient } from "@/lib/supabase/server"
 import { rowToForm, rowToResponse } from "@/lib/types"
 
+export const dynamic = "force-dynamic"
+
 interface Props {
   params: Promise<{ id: string }>
 }

@@ -19,11 +19,11 @@ export default function LoginForm() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const supabase = createClient()
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+
+    const supabase = createClient()
 
     try {
       if (mode === "signup") {
