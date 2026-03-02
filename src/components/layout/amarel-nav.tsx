@@ -5,7 +5,7 @@ import { NotificationBell } from "@/components/notifications/notification-bell"
 import { SignOutButton } from "./sign-out-button"
 
 // Nav color constants — use directly in className to avoid CSS-variable issues with Tailwind v4
-const NAV_BG = "bg-[#2D4458]"
+const NAV_BG = "bg-[#1e3347]"
 const NAV_BORDER = "border-[rgba(148,163,184,0.15)]"
 
 // ─── Brand wordmark ──────────────────────────────────────────────────────────
@@ -59,11 +59,12 @@ interface AppHeaderProps {
   userId: string
   userEmail?: string
   activePath?: "dashboard" | "forms" | "new" | "analytics"
+  hasSubBar?: boolean
 }
 
-export function AppHeader({ userId, userEmail, activePath }: AppHeaderProps) {
+export function AppHeader({ userId, userEmail, activePath, hasSubBar }: AppHeaderProps) {
   return (
-    <header className={`sticky top-0 z-20 border-b ${NAV_BG} ${NAV_BORDER}`}>
+    <header className={`sticky top-0 z-20 ${NAV_BG} ${hasSubBar ? "" : `border-b ${NAV_BORDER}`}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-4">
         {/* Logo */}
         <AmarelLogo />

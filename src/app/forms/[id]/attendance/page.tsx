@@ -8,7 +8,7 @@ import {
   UserX,
   Clock,
   Download,
-  ExternalLink,
+  Eye,
   Pencil,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -123,11 +123,12 @@ export default async function AttendancePage({ params, searchParams }: Props) {
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Full Amarel header */}
-      <AppHeader userId={user.id} userEmail={user.email ?? undefined} />
+      <AppHeader userId={user.id} userEmail={user.email ?? undefined} hasSubBar />
 
       {/* Breadcrumb sub-bar */}
-      <div className="bg-[#243b50] border-b border-[rgba(148,163,184,0.15)] px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto h-11 flex items-center justify-between gap-4">
+      <div className="bg-[#1e3347] px-4 sm:px-6 pb-3">
+        <div className="max-w-5xl mx-auto">
+        <div className="bg-[#2D4458] rounded-2xl h-12 flex items-center justify-between gap-4 px-4">
           <div className="flex items-center gap-2 min-w-0">
             <Button variant="ghost" size="sm" asChild className="h-7 rounded-lg gap-1 text-xs text-white/60 hover:text-white hover:bg-white/10 px-2">
               <Link href="/dashboard"><ArrowRight className="h-3.5 w-3.5" /> הטפסים שלי</Link>
@@ -145,10 +146,11 @@ export default async function AttendancePage({ params, searchParams }: Props) {
               <Link href={`/forms/${id}`}><Pencil className="h-3 w-3" /> ערוך</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild className="rounded-lg gap-1.5 h-7 text-xs text-white/70 hover:text-white hover:bg-white/10">
-              <Link href={`/f/${id}`} target="_blank"><ExternalLink className="h-3 w-3" /> פתח</Link>
+              <Link href={`/f/${id}`} target="_blank"><Eye className="h-3 w-3" /> תצוגה</Link>
             </Button>
-            <CopyLinkButton formId={id} />
+            <CopyLinkButton formId={id} variant="ghost-dark" />
           </div>
+        </div>
         </div>
       </div>
 

@@ -4,11 +4,10 @@ import Link from "next/link"
 import { useState } from "react"
 import { toast } from "sonner"
 import {
-  MoreHorizontal,
   Pencil,
   Trash2,
   BarChart2,
-  ExternalLink,
+  Eye,
   Copy,
   Globe,
   EyeOff,
@@ -41,6 +40,18 @@ import type { Form, FormResponse } from "@/lib/types"
 interface FormCardProps {
   form: Form
   responseCount: number
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim()
 }
 
 export function FormCard({ form, responseCount }: FormCardProps) {
@@ -112,9 +123,9 @@ export function FormCard({ form, responseCount }: FormCardProps) {
             <h3 className="font-semibold text-neutral-900 truncate text-sm">
               {form.name}
             </h3>
-            {form.description && (
+            {form.description && stripHtml(form.description) && (
               <p className="text-xs text-neutral-500 mt-0.5 line-clamp-2">
-                {form.description}
+                {stripHtml(form.description)}
               </p>
             )}
           </div>
@@ -126,7 +137,7 @@ export function FormCard({ form, responseCount }: FormCardProps) {
                 size="icon"
                 className="h-7 w-7 shrink-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <Pencil className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
@@ -152,7 +163,7 @@ export function FormCard({ form, responseCount }: FormCardProps) {
               )}
               <DropdownMenuItem asChild>
                 <Link href={`/f/${form.id}`} target="_blank" className="flex items-center gap-2">
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  <Eye className="h-3.5 w-3.5" />
                   תצוגה מקדימה
                 </Link>
               </DropdownMenuItem>
