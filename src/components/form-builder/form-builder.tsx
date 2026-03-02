@@ -40,6 +40,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Label } from "@/components/ui/label"
@@ -397,12 +398,9 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
                     <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
                       תיאור הטופס
                     </Label>
-                    <Textarea
+                    <RichTextEditor
                       value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="הוסף תיאור (אופציונלי)"
-                      rows={3}
-                      className="text-sm text-neutral-600 resize-none rounded-xl bg-neutral-50 border-neutral-200 focus-visible:ring-1 placeholder:text-neutral-400"
+                      onChange={setDescription}
                     />
                   </div>
 

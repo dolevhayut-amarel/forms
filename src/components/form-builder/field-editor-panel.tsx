@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, X, ImageIcon, LogIn, LogOut, Link2, PenLine } from "lucide-react"
+import { useRef, useState, useTransition } from "react"
+import { Plus, X, ImageIcon, LogIn, LogOut, Link2, PenLine, Upload, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -15,6 +15,7 @@ import {
   type TextValidationType,
 } from "@/lib/types"
 import { VALIDATION_PRESETS } from "@/lib/field-validation"
+import { uploadFormImage } from "@/lib/actions/storage"
 
 const TYPE_LABEL: Record<FieldConfig["type"], string> = {
   text: "טקסט",
@@ -37,10 +38,30 @@ interface FieldEditorPanelProps {
 
 export function FieldEditorPanel({ field, onChange }: FieldEditorPanelProps) {
   const [newOption, setNewOption] = useState("")
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const layout = isLayoutField(field.type)
 
   function update(patch: Partial<FieldConfig>) {
     onChange({ ...field, ...patch })
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadError(null)
+    const fd = new FormData()
+    fd.append("file", file)
+    startTransition(async () => {
+      const result = await uploadFormImage(fd)
+      if (result.error) {
+        setUploadError(result.error)
+      } else if (result.url) {
+        update({ content: result.url })
+      }
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    })
   }
 
   function addOption() {
@@ -264,9 +285,43 @@ export function FieldEditorPanel({ field, onChange }: FieldEditorPanelProps) {
 
       {field.type === "image" && (
         <>
+          {/* Upload area */}
           <div className="space-y-2">
             <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
-              כתובת URL של התמונה
+              העלאת תמונה
+            </Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/svg+xml"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isPending}
+              className="w-full flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 py-5 text-neutral-400 hover:border-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isPending ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Upload className="h-5 w-5" />
+              )}
+              <span className="text-xs font-medium">
+                {isPending ? "מעלה..." : "לחץ לבחירת קובץ"}
+              </span>
+              <span className="text-[11px] text-neutral-300">JPG, PNG, GIF, WEBP, SVG · עד 5MB</span>
+            </button>
+            {uploadError && (
+              <p className="text-xs text-red-500 text-right">{uploadError}</p>
+            )}
+          </div>
+
+          {/* Manual URL fallback */}
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+              או הכנס כתובת URL
             </Label>
             <Input
               value={field.content ?? ""}
@@ -276,6 +331,7 @@ export function FieldEditorPanel({ field, onChange }: FieldEditorPanelProps) {
               dir="ltr"
             />
           </div>
+
           <div className="space-y-2">
             <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
               טקסט חלופי (Alt)

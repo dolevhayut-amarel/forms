@@ -134,3 +134,21 @@ html {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 }
+
+/* TipTap rich text output */
+.rich-text strong { font-weight: 600; }
+.rich-text em { font-style: italic; }
+.rich-text p { margin: 0; }
+.rich-text p + p { margin-top: 0.25rem; }
+.rich-text p[style*="text-align: center"] { text-align: center; }
+.rich-text p[style*="text-align: left"] { text-align: left; }
+.rich-text p[style*="text-align: right"] { text-align: right; }
+
+/* TipTap editor placeholder */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: right;
+  color: #a3a3a3;
+  pointer-events: none;
+  height: 0;
+}

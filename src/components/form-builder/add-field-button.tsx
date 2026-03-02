@@ -123,8 +123,8 @@ export function AddFieldButton({ onAdd }: AddFieldButtonProps) {
           הוסף שדה
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" className="w-56">
-        <DropdownMenuLabel className="text-xs text-neutral-400 font-medium">
+      <DropdownMenuContent align="center" className="w-56" dir="rtl">
+        <DropdownMenuLabel className="text-xs text-neutral-400 font-medium text-right">
           שאלות
         </DropdownMenuLabel>
 
@@ -143,7 +143,7 @@ export function AddFieldButton({ onAdd }: AddFieldButtonProps) {
         ))}
 
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs text-neutral-400 font-medium">
+        <DropdownMenuLabel className="text-xs text-neutral-400 font-medium text-right">
           עיצוב ופריסה
         </DropdownMenuLabel>
 

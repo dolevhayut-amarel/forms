@@ -47,9 +47,10 @@ export function FormPreview({
                 {name || "טופס ללא שם"}
               </h1>
               {description && (
-                <p className="text-sm text-neutral-500 mt-1.5 leading-relaxed">
-                  {description}
-                </p>
+                <div
+                  className="text-sm text-neutral-500 mt-1.5 leading-relaxed rich-text"
+                  dangerouslySetInnerHTML={{ __html: description }}
+                />
               )}
             </div>
 

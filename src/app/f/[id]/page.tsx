@@ -84,7 +84,10 @@ export default async function PublicFillPage({ params }: Props) {
         <div className="mb-6">
           <h1 className="text-xl font-bold text-neutral-900 leading-snug">{form.name}</h1>
           {form.description && (
-            <p className="text-neutral-500 mt-2 text-sm leading-relaxed">{form.description}</p>
+            <div
+              className="text-neutral-500 mt-2 text-sm leading-relaxed rich-text"
+              dangerouslySetInnerHTML={{ __html: form.description }}
+            />
           )}
         </div>
 
