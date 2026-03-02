@@ -73,33 +73,38 @@ export default async function PublicFillPage({ params }: Props) {
   }
 
   return (
-    /*
-     * pb-safe: adds padding-bottom = env(safe-area-inset-bottom) on notch phones
-     * The sticky submit button inside FormRenderer needs clearance from the home bar.
-     */
-    <div className="min-h-screen bg-neutral-50">
-      {/* Scrollable content area — bottom padded so sticky button never overlaps */}
-      <div className="px-4 pt-8 pb-32 sm:py-12 sm:pb-12 max-w-lg mx-auto">
-        {/* Form header */}
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-neutral-900 leading-snug">{form.name}</h1>
-          {form.description && (
-            <div
-              className="text-neutral-500 mt-2 text-sm leading-relaxed rich-text"
-              dangerouslySetInnerHTML={{ __html: form.description }}
-            />
-          )}
-        </div>
+    <div className="min-h-screen bg-neutral-100" dir="rtl">
+      <div className="px-4 pt-8 pb-32 sm:py-12 sm:pb-12 max-w-md mx-auto">
 
-        {/* Fields card */}
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-5 sm:p-6">
-          {form.fields.length === 0 ? (
-            <p className="text-center text-neutral-400 text-sm py-10">
-              לטופס זה אין שדות עדיין.
-            </p>
-          ) : (
-            <FormRenderer form={form} />
-          )}
+        {/* Unified form card — matches preview exactly */}
+        <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
+
+          {/* Header — same border-b as preview */}
+          <div className="px-6 pt-6 pb-4 border-b border-neutral-100">
+            <h1
+              className="text-xl font-bold text-neutral-900"
+              style={{ textAlign: form.settings?.title_align ?? "right" }}
+            >
+              {form.name}
+            </h1>
+            {form.description && (
+              <div
+                className="text-sm text-neutral-500 mt-1.5 leading-relaxed rich-text"
+                dangerouslySetInnerHTML={{ __html: form.description }}
+              />
+            )}
+          </div>
+
+          {/* Fields */}
+          <div className="px-6 py-5 space-y-5">
+            {form.fields.length === 0 ? (
+              <p className="text-center text-neutral-400 text-sm py-10">
+                לטופס זה אין שדות עדיין.
+              </p>
+            ) : (
+              <FormRenderer form={form} />
+            )}
+          </div>
         </div>
 
         {/* Branding */}

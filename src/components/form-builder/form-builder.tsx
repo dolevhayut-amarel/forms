@@ -35,6 +35,9 @@ import {
   CreditCard,
   Building2,
   ArrowLeftRight,
+  AlignRight,
+  AlignCenter,
+  AlignLeft,
 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -85,6 +88,9 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
   )
   const [redirectUrl, setRedirectUrl] = useState(
     initialForm?.settings?.redirect_url ?? ""
+  )
+  const [titleAlign, setTitleAlign] = useState<"right" | "center" | "left">(
+    initialForm?.settings?.title_align ?? "right"
   )
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null)
   // null = form settings panel; string = field editor
@@ -194,6 +200,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
             submit_label: submitLabel.trim() || undefined,
             after_submit: afterSubmit,
             redirect_url: afterSubmit === "redirect" ? redirectUrl.trim() || undefined : undefined,
+            title_align: titleAlign,
             ...(dirField && { attendance_direction_field: dirField.id }),
             ...(idField && { attendance_id_field: idField.id }),
           },
@@ -393,6 +400,32 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
                 <FieldEditorPanel field={selectedField} onChange={updateField} />
               ) : (
                 <div className="space-y-5">
+                  {/* Title alignment */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+                      יישור כותרת
+                    </Label>
+                    <div className="flex gap-1">
+                      {(["right", "center", "left"] as const).map((align) => {
+                        const Icon = align === "right" ? AlignRight : align === "center" ? AlignCenter : AlignLeft
+                        return (
+                          <button
+                            key={align}
+                            type="button"
+                            onClick={() => setTitleAlign(align)}
+                            className={`flex-1 flex items-center justify-center py-1.5 rounded-lg border text-xs transition-colors ${
+                              titleAlign === align
+                                ? "bg-neutral-800 border-neutral-800 text-white"
+                                : "border-neutral-200 text-neutral-500 hover:bg-neutral-50"
+                            }`}
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
                   {/* Description */}
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
@@ -504,6 +537,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
             <FormPreview
               name={name}
               description={description}
+              titleAlign={titleAlign}
               fields={fields}
               submitLabel={
                 submitLabel.trim() || (formType === "attendance" ? "שלח דיווח" : "שלח")

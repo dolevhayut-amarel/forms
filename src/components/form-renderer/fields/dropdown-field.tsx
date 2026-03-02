@@ -27,24 +27,24 @@ export function DropdownField({ field, value, onChange, error }: DropdownFieldPr
         )}
       </Label>
 
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value} onValueChange={onChange} dir="rtl">
         <SelectTrigger
           className={`
-            h-12              /* 48 px touch target */
+            h-12
             rounded-xl
-            text-base          /* ≥16 px prevents iOS zoom */
+            text-base
             px-4
             ${error ? "border-red-400" : ""}
           `}
         >
           <SelectValue placeholder="בחר אפשרות…" />
         </SelectTrigger>
-        <SelectContent className="rounded-xl">
+        <SelectContent className="rounded-xl" dir="rtl">
           {(field.options ?? []).map((opt) => (
             <SelectItem
               key={opt}
               value={opt}
-              className="text-base py-3 cursor-pointer"  /* bigger tap rows */
+              className="text-base py-3 cursor-pointer"
             >
               {opt}
             </SelectItem>

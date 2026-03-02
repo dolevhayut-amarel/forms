@@ -68,6 +68,7 @@ export interface FormSettings {
   redirect_url?: string           // used when after_submit === "redirect"
   attendance_id_field?: string
   attendance_direction_field?: string
+  title_align?: "right" | "center" | "left"
 }
 
 export interface FormSchema {

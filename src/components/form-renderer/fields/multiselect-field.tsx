@@ -44,6 +44,7 @@ export function MultiSelectField({
              */
             <label
               key={opt}
+              dir="rtl"
               className={`
                 flex items-center gap-4 py-4 px-4
                 rounded-xl border-2 cursor-pointer
@@ -61,7 +62,7 @@ export function MultiSelectField({
                 onCheckedChange={() => toggle(opt)}
                 className="h-5 w-5 rounded-md shrink-0"
               />
-              <span className="text-base text-neutral-800 leading-snug flex-1">
+              <span className="text-base text-neutral-800 leading-snug flex-1 text-right">
                 {opt}
               </span>
             </label>

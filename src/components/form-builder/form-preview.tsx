@@ -20,6 +20,7 @@ import { isLayoutField, type FieldConfig } from "@/lib/types"
 interface FormPreviewProps {
   name: string
   description: string
+  titleAlign?: "right" | "center" | "left"
   fields: FieldConfig[]
   submitLabel: string
   selectedFieldId: string | null
@@ -29,6 +30,7 @@ interface FormPreviewProps {
 export function FormPreview({
   name,
   description,
+  titleAlign = "right",
   fields,
   submitLabel,
   selectedFieldId,
@@ -43,7 +45,10 @@ export function FormPreview({
           <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
             {/* Form header */}
             <div className="px-6 pt-6 pb-4 border-b border-neutral-100">
-              <h1 className="text-xl font-bold text-neutral-900">
+              <h1
+                className="text-xl font-bold text-neutral-900"
+                style={{ textAlign: titleAlign }}
+              >
                 {name || "טופס ללא שם"}
               </h1>
               {description && (
