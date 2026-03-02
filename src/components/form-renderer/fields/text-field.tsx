@@ -4,8 +4,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import type { FieldConfig } from "@/lib/types"
-import { VALIDATION_PRESETS } from "@/lib/field-validation"
-
 interface TextFieldProps {
   field: FieldConfig
   value: string
@@ -16,10 +14,6 @@ interface TextFieldProps {
 export function TextField({ field, value, onChange, error }: TextFieldProps) {
   const isLong = field.label.length > 50 || (field.placeholder ?? "").length > 50
   const validationType = field.validation?.type ?? "none"
-  const validationHint =
-    validationType !== "none"
-      ? VALIDATION_PRESETS[validationType]?.description
-      : undefined
 
   // Use numeric keyboard for numbers_only on mobile
   const inputMode =
@@ -69,13 +63,6 @@ export function TextField({ field, value, onChange, error }: TextFieldProps) {
         />
       )}
 
-      {/* Format hint */}
-      {validationHint && !error && (
-        <p className="text-xs text-neutral-400 flex items-center gap-1">
-          <span className="text-neutral-300">•</span>
-          {validationHint}
-        </p>
-      )}
 
       {error && (
         <p className="text-sm text-red-500 flex items-center gap-1">
