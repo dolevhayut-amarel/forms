@@ -123,7 +123,7 @@ export function AddFieldButton({ onAdd }: AddFieldButtonProps) {
           הוסף שדה
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" className="w-56" dir="rtl">
+      <DropdownMenuContent align="center" className="w-56 [direction:rtl]">
         <DropdownMenuLabel className="text-xs text-neutral-400 font-medium text-right">
           שאלות
         </DropdownMenuLabel>
