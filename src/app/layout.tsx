@@ -11,6 +11,9 @@ const googleSans = Google_Sans({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://forms.amarel.net"
+  ),
   title: {
     default: "אמרל טפסים",
     template: "%s | אמרל טפסים",

@@ -55,6 +55,7 @@ import {
 import { AddFieldButton } from "./add-field-button"
 import { FieldItem } from "./field-item"
 import { FieldEditorPanel } from "./field-editor-panel"
+import { FormPreview } from "./form-preview"
 import { createForm, updateForm } from "@/lib/actions/forms"
 import {
   buildAttendanceFields,
@@ -77,6 +78,12 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
   const [formType, setFormType] = useState<FormType>(initialForm?.form_type ?? "general")
   const [submitLabel, setSubmitLabel] = useState(
     initialForm?.settings?.submit_label ?? ""
+  )
+  const [afterSubmit, setAfterSubmit] = useState<"thank_you" | "redirect">(
+    initialForm?.settings?.after_submit ?? "thank_you"
+  )
+  const [redirectUrl, setRedirectUrl] = useState(
+    initialForm?.settings?.redirect_url ?? ""
   )
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null)
   // null = form settings panel; string = field editor
@@ -184,6 +191,8 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
             submit_message:
               formType === "attendance" ? "הדיווח נקלט בהצלחה!" : "תודה על תגובתך!",
             submit_label: submitLabel.trim() || undefined,
+            after_submit: afterSubmit,
+            redirect_url: afterSubmit === "redirect" ? redirectUrl.trim() || undefined : undefined,
             ...(dirField && { attendance_direction_field: dirField.id }),
             ...(idField && { attendance_id_field: idField.id }),
           },
@@ -217,7 +226,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
         setPublishing(false)
       }
     },
-    [name, description, fields, formType, submitLabel, isEditing, initialForm, router]
+    [name, description, fields, formType, submitLabel, afterSubmit, redirectUrl, isEditing, initialForm, router]
   )
 
   return (
@@ -337,57 +346,185 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
           </div>
         </header>
 
-        {/* Body */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Right panel (RTL start) — field list */}
-          <div className="w-72 shrink-0 bg-white border-s border-neutral-200 flex flex-col overflow-hidden order-last">
-            {/* Description + quick actions */}
-            <div className="p-4 border-b border-neutral-100 space-y-3">
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="הוסף תיאור (אופציונלי)"
-                rows={2}
-                className="text-xs text-neutral-600 resize-none border-0 shadow-none bg-neutral-50 rounded-xl p-3 focus-visible:ring-0 placeholder:text-neutral-400"
-              />
-
-              <div className="flex gap-2">
-                {/* Form settings button */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={openSettings}
-                  className={`flex-1 h-8 rounded-xl gap-1.5 text-xs ${
-                    rightPanel === "settings"
-                      ? "border-neutral-900 bg-neutral-50"
-                      : ""
-                  }`}
-                >
-                  <Settings2 className="h-3.5 w-3.5" />
-                  הגדרות
-                </Button>
-
-                {(!isEditing || formType === "general") && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setAttendanceDialog(true)}
-                    className="flex-1 h-8 rounded-xl gap-1.5 text-xs border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+        {/*
+         * Body — 3 columns (RTL: right → center → left):
+         *   1. Field list panel  (right side, w-56)
+         *   2. Live preview      (center, flex-1)
+         *   3. Editor / settings (left side, w-72, slides in)
+         *
+         * In RTL flex-row the first DOM child appears on the RIGHT.
+         * We place them in visual right→center→left order in the DOM.
+         *)
+         */}
+        <div className="flex flex-1 overflow-hidden" style={{ direction: "ltr" }}>
+          {/* ── Col 3: Editor panel — LEFT (ltr-end, 30%) ── */}
+          <div className="flex-[3] min-w-[280px] max-w-[380px] bg-white border-e border-neutral-200 flex flex-col overflow-hidden order-last">
+            {/* Header */}
+            <div
+              className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between"
+              style={{ direction: "rtl" }}
+            >
+              {selectedField ? (
+                <>
+                  <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
+                    עריכת שדה
+                  </span>
+                  <button
+                    onClick={openSettings}
+                    className="text-xs text-neutral-400 hover:text-neutral-600"
                   >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    נוכחות
-                  </Button>
-                )}
-              </div>
+                    ✕ סגור
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wide flex items-center gap-1.5">
+                    <Settings2 className="h-3.5 w-3.5" />
+                    הגדרות טופס
+                  </span>
+                </>
+              )}
             </div>
 
-            {/* Field list */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4" style={{ direction: "rtl" }}>
+              {selectedField ? (
+                <FieldEditorPanel field={selectedField} onChange={updateField} />
+              ) : (
+                <div className="space-y-5">
+                  {/* Description */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+                      תיאור הטופס
+                    </Label>
+                    <Textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="הוסף תיאור (אופציונלי)"
+                      rows={3}
+                      className="text-sm text-neutral-600 resize-none rounded-xl bg-neutral-50 border-neutral-200 focus-visible:ring-1 placeholder:text-neutral-400"
+                    />
+                  </div>
+
+                  <Separator />
+
+                  {/* Submit label */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+                      טקסט כפתור השליחה
+                    </Label>
+                    <Input
+                      value={submitLabel}
+                      onChange={(e) => setSubmitLabel(e.target.value)}
+                      placeholder={formType === "attendance" ? "שלח דיווח" : "שלח"}
+                      className="h-9 rounded-xl text-sm"
+                    />
+                    <p className="text-xs text-neutral-400">
+                      ברירת מחדל: &ldquo;{formType === "attendance" ? "שלח דיווח" : "שלח"}&rdquo;
+                    </p>
+                  </div>
+
+                  <Separator />
+
+                  <Separator />
+
+                  {/* After submit action */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+                      לאחר שליחה
+                    </Label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setAfterSubmit("thank_you")}
+                        className={`flex-1 py-2 px-3 rounded-xl border text-xs font-medium transition-all ${
+                          afterSubmit === "thank_you"
+                            ? "border-neutral-900 bg-neutral-50 text-neutral-900"
+                            : "border-neutral-200 text-neutral-500 hover:border-neutral-300"
+                        }`}
+                      >
+                        עמוד תודה
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAfterSubmit("redirect")}
+                        className={`flex-1 py-2 px-3 rounded-xl border text-xs font-medium transition-all ${
+                          afterSubmit === "redirect"
+                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                            : "border-neutral-200 text-neutral-500 hover:border-neutral-300"
+                        }`}
+                      >
+                        הפנייה ל-URL
+                      </button>
+                    </div>
+                    {afterSubmit === "redirect" && (
+                      <Input
+                        value={redirectUrl}
+                        onChange={(e) => setRedirectUrl(e.target.value)}
+                        placeholder="https://example.com/thank-you"
+                        className="h-9 rounded-xl text-xs mt-1"
+                        dir="ltr"
+                      />
+                    )}
+                  </div>
+
+                  {/* Attendance template */}
+                  {(!isEditing || formType === "general") && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAttendanceDialog(true)}
+                      className="w-full h-8 rounded-xl gap-1.5 text-xs border-blue-200 text-blue-600 hover:bg-blue-50"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      תבנית מהירה: נוכחות
+                    </Button>
+                  )}
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-neutral-50 rounded-xl p-3 text-center">
+                      <div className="text-xl font-bold text-neutral-800">
+                        {fields.filter((f) => !isLayoutField(f.type)).length}
+                      </div>
+                      <div className="text-xs text-neutral-500">שאלות</div>
+                    </div>
+                    <div className="bg-violet-50 rounded-xl p-3 text-center">
+                      <div className="text-xl font-bold text-violet-700">
+                        {fields.filter((f) => isLayoutField(f.type)).length}
+                      </div>
+                      <div className="text-xs text-violet-500">עיצוב</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Col 2: Live preview — CENTER (40%) — restore RTL inside ── */}
+          <div className="flex-[4] min-w-0 overflow-hidden border-e border-neutral-200" style={{ direction: "rtl" }}>
+            <FormPreview
+              name={name}
+              description={description}
+              fields={fields}
+              submitLabel={
+                submitLabel.trim() || (formType === "attendance" ? "שלח דיווח" : "שלח")
+              }
+              selectedFieldId={selectedField?.id ?? null}
+              onSelectField={selectField}
+            />
+          </div>
+
+          {/* ── Col 1: Field list — RIGHT (30%) ── */}
+          <div className="flex-[3] min-w-[220px] max-w-[340px] bg-white border-e border-neutral-200 flex flex-col overflow-hidden">
+            <div className="px-3 pt-3 pb-2 border-b border-neutral-100" style={{ direction: "rtl" }}>
+              <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">שדות</p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-2 space-y-1.5" style={{ direction: "rtl" }}>
               {fields.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-xs text-neutral-400">
-                    אין שדות עדיין. הוסף שדה ראשון למטה.
-                  </p>
+                <div className="text-center py-10">
+                  <p className="text-xs text-neutral-400">לחץ + להוספת שדה</p>
                 </div>
               ) : (
                 <DndContext
@@ -404,7 +541,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
                       <FieldItem
                         key={field.id}
                         field={field}
-                        isSelected={rightPanel === "field" && selectedFieldId === field.id}
+                        isSelected={selectedField?.id === field.id}
                         onSelect={() => selectField(field.id)}
                         onDelete={() => deleteField(field.id)}
                       />
@@ -414,93 +551,9 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
               )}
             </div>
 
-            <div className="p-3 border-t border-neutral-100">
+            <div className="p-2 border-t border-neutral-100" style={{ direction: "rtl" }}>
               <AddFieldButton onAdd={addField} />
             </div>
-          </div>
-
-          {/* Left panel (RTL end) — field editor OR form settings */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {rightPanel === "field" && selectedField ? (
-              <div className="max-w-md mx-auto bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm">
-                <FieldEditorPanel field={selectedField} onChange={updateField} />
-              </div>
-            ) : rightPanel === "settings" ? (
-              <div className="max-w-md mx-auto space-y-4">
-                <div className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm">
-                  <div className="flex items-center gap-2 mb-5">
-                    <Settings2 className="h-4 w-4 text-neutral-500" />
-                    <h3 className="text-sm font-semibold text-neutral-700">הגדרות טופס</h3>
-                  </div>
-
-                  <Separator className="mb-5" />
-
-                  {/* Submit button label */}
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
-                      טקסט כפתור השליחה
-                    </Label>
-                    <Input
-                      value={submitLabel}
-                      onChange={(e) => setSubmitLabel(e.target.value)}
-                      placeholder={formType === "attendance" ? "שלח דיווח" : "שלח"}
-                      className="h-10 rounded-xl text-sm"
-                    />
-                    <p className="text-xs text-neutral-400">
-                      ברירת מחדל: &ldquo;{formType === "attendance" ? "שלח דיווח" : "שלח"}&rdquo;
-                    </p>
-                  </div>
-
-                  <Separator className="my-5" />
-
-                  {/* Preview of the button */}
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
-                      תצוגה מקדימה
-                    </Label>
-                    <div className="flex justify-center">
-                      <div className="bg-neutral-900 text-white rounded-xl px-8 py-3 text-sm font-semibold">
-                        {submitLabel.trim() ||
-                          (formType === "attendance" ? "שלח דיווח" : "שלח")}
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator className="my-5" />
-
-                  {/* Form stats */}
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
-                      סיכום
-                    </Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-neutral-50 rounded-xl p-3 text-center">
-                        <div className="text-xl font-bold text-neutral-800">
-                          {fields.filter((f) => !isLayoutField(f.type)).length}
-                        </div>
-                        <div className="text-xs text-neutral-500 mt-0.5">שאלות</div>
-                      </div>
-                      <div className="bg-violet-50 rounded-xl p-3 text-center">
-                        <div className="text-xl font-bold text-violet-700">
-                          {fields.filter((f) => isLayoutField(f.type)).length}
-                        </div>
-                        <div className="text-xs text-violet-500 mt-0.5">אלמנטי עיצוב</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center">
-                <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mb-4">
-                  <Settings2 className="h-6 w-6 text-neutral-300" />
-                </div>
-                <p className="text-sm font-medium text-neutral-500">בחר שדה לעריכה</p>
-                <p className="text-xs text-neutral-400 mt-1">
-                  לחץ על כל שדה בצד ימין, או על &ldquo;הגדרות&rdquo; לקביעת כפתור השליחה
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>

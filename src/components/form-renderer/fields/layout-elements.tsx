@@ -1,5 +1,6 @@
 "use client"
 
+import { ExternalLink } from "lucide-react"
 import type { FieldConfig } from "@/lib/types"
 
 interface LayoutElementProps {
@@ -47,6 +48,28 @@ export function DividerElement({ field }: LayoutElementProps) {
     )
   }
   return <div className="h-px bg-neutral-200 my-1" />
+}
+
+export function LinkElement({ field }: LayoutElementProps) {
+  const href = field.content ?? ""
+  if (!href) return null
+  return (
+    <div className="flex justify-center">
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border-2 border-blue-200 bg-blue-50 text-blue-600 font-medium text-sm hover:bg-blue-100 hover:border-blue-300 transition-colors"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <ExternalLink className="h-4 w-4 shrink-0" />
+        <span>{field.label || href}</span>
+      </a>
+      {field.placeholder && (
+        <p className="text-xs text-neutral-400 text-center mt-1.5">{field.placeholder}</p>
+      )}
+    </div>
+  )
 }
 
 export function ImageElement({ field }: LayoutElementProps) {

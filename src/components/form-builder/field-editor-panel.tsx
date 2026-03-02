@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, X, ImageIcon, LogIn, LogOut } from "lucide-react"
+import { Plus, X, ImageIcon, LogIn, LogOut, Link2, PenLine } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,18 +9,25 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { isLayoutField, type FieldConfig } from "@/lib/types"
+import {
+  isLayoutField,
+  type FieldConfig,
+  type TextValidationType,
+} from "@/lib/types"
+import { VALIDATION_PRESETS } from "@/lib/field-validation"
 
 const TYPE_LABEL: Record<FieldConfig["type"], string> = {
   text: "טקסט",
   dropdown: "רשימה נפתחת",
   multiselect: "בחירה מרובה",
   entry_exit: "כניסה / יציאה",
+  signature: "חתימה",
   heading: "כותרת ראשית",
   subheading: "כותרת משנה",
   paragraph: "פסקת טקסט",
   divider: "קו הפרדה",
   image: "תמונה",
+  link: "לינק",
 }
 
 interface FieldEditorPanelProps {
@@ -164,6 +171,97 @@ export function FieldEditorPanel({ field, onChange }: FieldEditorPanelProps) {
         </div>
       )}
 
+      {field.type === "link" && (
+        <>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+              טקסט הקישור
+            </Label>
+            <Input
+              value={field.label}
+              onChange={(e) => update({ label: e.target.value })}
+              placeholder="לדוגמה: לחץ כאן"
+              className="h-9 rounded-xl text-sm"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+              כתובת URL
+            </Label>
+            <Input
+              value={field.content ?? ""}
+              onChange={(e) => update({ content: e.target.value })}
+              placeholder="https://..."
+              className="h-9 rounded-xl text-sm"
+              dir="ltr"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+              תיאור (אופציונלי)
+            </Label>
+            <Input
+              value={field.placeholder ?? ""}
+              onChange={(e) => update({ placeholder: e.target.value })}
+              placeholder="טקסט תיאור מתחת לקישור"
+              className="h-9 rounded-xl text-sm"
+            />
+          </div>
+
+          {/* Preview */}
+          {field.content && (
+            <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-100 text-center space-y-1">
+              <div className="flex items-center justify-center gap-1.5">
+                <Link2 className="h-4 w-4 text-blue-500" />
+                <span className="text-sm font-medium text-blue-600 underline">
+                  {field.label || "לינק"}
+                </span>
+              </div>
+              {field.placeholder && (
+                <p className="text-xs text-neutral-400">{field.placeholder}</p>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {field.type === "signature" && (
+        <>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+              תווית
+            </Label>
+            <Input
+              value={field.label}
+              onChange={(e) => update({ label: e.target.value })}
+              placeholder="לדוגמה: חתימה"
+              className="h-9 rounded-xl text-sm"
+            />
+          </div>
+
+          <div className="bg-neutral-50 rounded-xl border border-neutral-200 overflow-hidden">
+            <div className="h-28 flex flex-col items-center justify-center gap-2 text-neutral-300">
+              <PenLine className="h-7 w-7" />
+              <span className="text-xs">שטח חתימה — יופיע בטופס</span>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-neutral-700">שדה חובה</p>
+              <p className="text-xs text-neutral-400">החתימה נדרשת</p>
+            </div>
+            <Checkbox
+              checked={field.required}
+              onCheckedChange={(checked) => update({ required: checked === true })}
+              className="rounded-md"
+            />
+          </div>
+        </>
+      )}
+
       {field.type === "image" && (
         <>
           <div className="space-y-2">
@@ -272,6 +370,110 @@ export function FieldEditorPanel({ field, onChange }: FieldEditorPanelProps) {
                 placeholder="לדוגמה: הקלד תשובתך…"
                 className="h-9 rounded-xl text-sm"
               />
+            </div>
+          )}
+
+          {/* Validation (text only) */}
+          {field.type === "text" && (
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+                ולידציה
+              </Label>
+
+              {/* Validation type selector */}
+              <div className="grid grid-cols-1 gap-1.5">
+                {(
+                  [
+                    "none",
+                    "numbers_only",
+                    "text_only",
+                    "phone_il",
+                    "id_il",
+                    "custom_regex",
+                  ] as TextValidationType[]
+                ).map((vtype) => {
+                  const preset = VALIDATION_PRESETS[vtype]
+                  const isActive =
+                    (field.validation?.type ?? "none") === vtype
+                  return (
+                    <button
+                      key={vtype}
+                      type="button"
+                      onClick={() =>
+                        update({
+                          validation:
+                            vtype === "none"
+                              ? undefined
+                              : { type: vtype, custom_pattern: field.validation?.custom_pattern },
+                        })
+                      }
+                      className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-start transition-all ${
+                        isActive
+                          ? "border-neutral-900 bg-neutral-50"
+                          : "border-neutral-200 hover:border-neutral-300"
+                      }`}
+                    >
+                      <span
+                        className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 shrink-0 flex items-center justify-center ${
+                          isActive
+                            ? "border-neutral-900 bg-neutral-900"
+                            : "border-neutral-300"
+                        }`}
+                      >
+                        {isActive && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                        )}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-neutral-800 leading-tight">
+                          {preset.label}
+                        </p>
+                        <p className="text-[11px] text-neutral-400 leading-tight mt-0.5">
+                          {preset.description}
+                        </p>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Custom regex input */}
+              {field.validation?.type === "custom_regex" && (
+                <div className="space-y-1.5 pt-1">
+                  <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+                    תבנית Regex
+                  </Label>
+                  <Input
+                    value={field.validation.custom_pattern ?? ""}
+                    onChange={(e) =>
+                      update({
+                        validation: {
+                          type: "custom_regex",
+                          custom_pattern: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="לדוגמה: ^\d{4}$"
+                    className="h-9 rounded-xl text-sm font-mono"
+                    dir="ltr"
+                  />
+                  {field.validation.custom_pattern && (
+                    <p className="text-xs text-neutral-400">
+                      בדיקה:{" "}
+                      <span className="font-mono text-neutral-600">
+                        {(() => {
+                          try {
+                            new RegExp(field.validation.custom_pattern)
+                            return "✅ תבנית תקינה"
+                          } catch {
+                            return "❌ תבנית לא תקינה"
+                          }
+                        })()}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

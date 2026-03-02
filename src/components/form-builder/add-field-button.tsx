@@ -11,6 +11,8 @@ import {
   AlignLeft,
   Minus,
   ImageIcon,
+  Link2,
+  PenLine,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -48,6 +50,12 @@ const INPUT_FIELD_TYPES: {
     description: "בחירת מספר אפשרויות",
   },
   {
+    type: "signature",
+    label: "חתימה",
+    icon: <PenLine className="h-4 w-4" />,
+    description: "חתימה בכתב יד",
+  },
+  {
     type: "entry_exit",
     label: "כניסה / יציאה",
     icon: <ArrowLeftRight className="h-4 w-4" />,
@@ -78,6 +86,12 @@ const LAYOUT_FIELD_TYPES: {
     label: "פסקת טקסט",
     icon: <AlignLeft className="h-4 w-4" />,
     description: "בלוק תוכן חופשי",
+  },
+  {
+    type: "link",
+    label: "לינק",
+    icon: <Link2 className="h-4 w-4" />,
+    description: "קישור לחיץ",
   },
   {
     type: "divider",

@@ -14,9 +14,12 @@ import {
   ParagraphElement,
   DividerElement,
   ImageElement,
+  LinkElement,
 } from "./fields/layout-elements"
+import { SignatureField } from "./fields/signature-field"
 import { submitResponse } from "@/lib/actions/responses"
 import { isLayoutField, type FieldConfig, type Form } from "@/lib/types"
+import { validateTextValue } from "@/lib/field-validation"
 
 interface FormRendererProps {
   form: Form
@@ -28,6 +31,8 @@ type FormErrors = Record<string, string>
 export function FormRenderer({ form }: FormRendererProps) {
   // Only input fields participate in form state
   const inputFields = form.fields.filter((f) => !isLayoutField(f.type))
+  const afterSubmit = form.settings?.after_submit ?? "thank_you"
+  const redirectUrl = form.settings?.redirect_url ?? ""
 
   const [values, setValues] = useState<FormValues>(() => {
     const initial: FormValues = {}
@@ -58,14 +63,25 @@ export function FormRenderer({ form }: FormRendererProps) {
   function validate(): boolean {
     const newErrors: FormErrors = {}
     inputFields.forEach((f) => {
-      if (!f.required) return
       const val = values[f.id]
-      if (f.type === "multiselect") {
-        if ((val as string[]).length === 0)
-          newErrors[f.id] = "אנא בחר לפחות אפשרות אחת"
-      } else {
-        if (!val || (val as string).trim() === "")
-          newErrors[f.id] = "שדה זה הוא חובה"
+
+      // Required check
+      if (f.required) {
+        if (f.type === "multiselect") {
+          if ((val as string[]).length === 0)
+            newErrors[f.id] = "אנא בחר לפחות אפשרות אחת"
+        } else {
+          if (!val || (val as string).trim() === "")
+            newErrors[f.id] = "שדה זה הוא חובה"
+        }
+      }
+
+      // Pattern / format validation (text fields only, only if a value exists)
+      if (f.type === "text" && val && (val as string).trim() !== "") {
+        const validationError = validateTextValue(val as string, f.validation)
+        if (validationError) {
+          newErrors[f.id] = validationError
+        }
       }
     })
     setErrors(newErrors)
@@ -89,8 +105,12 @@ export function FormRenderer({ form }: FormRendererProps) {
       if (result.error) {
         toast.error(result.error)
       } else {
-        setSubmitted(true)
-        window.scrollTo({ top: 0, behavior: "smooth" })
+        if (afterSubmit === "redirect" && redirectUrl) {
+          window.location.href = redirectUrl
+        } else {
+          setSubmitted(true)
+          window.scrollTo({ top: 0, behavior: "smooth" })
+        }
       }
     } catch {
       toast.error("אירעה שגיאה. אנא נסה שוב.")
@@ -201,6 +221,7 @@ function FieldRenderer({
   if (field.type === "paragraph")  return <ParagraphElement field={field} />
   if (field.type === "divider")    return <DividerElement field={field} />
   if (field.type === "image")      return <ImageElement field={field} />
+  if (field.type === "link")       return <LinkElement field={field} />
 
   // Input fields
   if (field.type === "text") {
@@ -221,6 +242,11 @@ function FieldRenderer({
   if (field.type === "entry_exit") {
     return (
       <EntryExitField field={field} value={value as string} onChange={(v) => onChange(v)} error={error} />
+    )
+  }
+  if (field.type === "signature") {
+    return (
+      <SignatureField field={field} value={value as string} onChange={(v) => onChange(v)} error={error} />
     )
   }
   return null

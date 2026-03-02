@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Plus, LayoutGrid } from "lucide-react"
+import { Plus, LayoutGrid, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NotificationBell } from "@/components/notifications/notification-bell"
 import { SignOutButton } from "./sign-out-button"
@@ -58,7 +58,7 @@ function NavLink({
 interface AppHeaderProps {
   userId: string
   userEmail?: string
-  activePath?: "dashboard" | "forms" | "new"
+  activePath?: "dashboard" | "forms" | "new" | "analytics"
 }
 
 export function AppHeader({ userId, userEmail, activePath }: AppHeaderProps) {
@@ -76,6 +76,10 @@ export function AppHeader({ userId, userEmail, activePath }: AppHeaderProps) {
           <NavLink href="/dashboard" active={activePath === "dashboard"}>
             <LayoutGrid className="h-3.5 w-3.5" />
             הטפסים שלי
+          </NavLink>
+          <NavLink href="/analytics" active={activePath === "analytics"}>
+            <BarChart3 className="h-3.5 w-3.5" />
+            אנליטיקס
           </NavLink>
         </nav>
 

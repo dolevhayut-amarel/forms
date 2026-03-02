@@ -1,10 +1,10 @@
 // ─── Field types ─────────────────────────────────────────────────────────────
 
 /** Input fields — collect user answers */
-export type InputFieldType = "text" | "dropdown" | "multiselect" | "entry_exit"
+export type InputFieldType = "text" | "dropdown" | "multiselect" | "entry_exit" | "signature"
 
 /** Layout/visual fields — display only, no answer collected */
-export type LayoutFieldType = "heading" | "subheading" | "paragraph" | "divider" | "image"
+export type LayoutFieldType = "heading" | "subheading" | "paragraph" | "divider" | "image" | "link"
 
 export type FieldType = InputFieldType | LayoutFieldType
 
@@ -14,6 +14,7 @@ export const LAYOUT_FIELD_TYPES: LayoutFieldType[] = [
   "paragraph",
   "divider",
   "image",
+  "link",
 ]
 
 export function isLayoutField(type: FieldType): type is LayoutFieldType {
@@ -21,6 +22,21 @@ export function isLayoutField(type: FieldType): type is LayoutFieldType {
 }
 
 // ─── Field config ─────────────────────────────────────────────────────────────
+
+// ─── Text field validation ────────────────────────────────────────────────────
+
+export type TextValidationType =
+  | "none"
+  | "numbers_only"
+  | "text_only"
+  | "phone_il"
+  | "id_il"
+  | "custom_regex"
+
+export interface FieldValidation {
+  type: TextValidationType
+  custom_pattern?: string   // regex string for custom_regex
+}
 
 export interface FieldConfig {
   id: string
@@ -37,6 +53,7 @@ export interface FieldConfig {
   required: boolean               // only meaningful for input fields
   options?: string[]              // dropdown & multiselect only
   content?: string                // paragraph body text; image URL alternative
+  validation?: FieldValidation    // text field validation rule
   attendance_role?: "id_number" | "name" | "division" | "direction"
 }
 
@@ -47,6 +64,8 @@ export type FormType = "general" | "attendance"
 export interface FormSettings {
   submit_message?: string
   submit_label?: string           // text on the submit button (default: "שלח")
+  after_submit?: "thank_you" | "redirect"  // what happens after form is submitted
+  redirect_url?: string           // used when after_submit === "redirect"
   attendance_id_field?: string
   attendance_direction_field?: string
 }

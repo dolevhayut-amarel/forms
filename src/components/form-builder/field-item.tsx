@@ -14,6 +14,8 @@ import {
   AlignLeft,
   Minus,
   ImageIcon,
+  Link2,
+  PenLine,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { isLayoutField, type FieldConfig } from "@/lib/types"
@@ -23,11 +25,13 @@ const TYPE_ICON: Record<FieldConfig["type"], React.ReactNode> = {
   dropdown: <ChevronDown className="h-3.5 w-3.5" />,
   multiselect: <ListChecks className="h-3.5 w-3.5" />,
   entry_exit: <ArrowLeftRight className="h-3.5 w-3.5" />,
+  signature: <PenLine className="h-3.5 w-3.5" />,
   heading: <Heading1 className="h-3.5 w-3.5" />,
   subheading: <Heading2 className="h-3.5 w-3.5" />,
   paragraph: <AlignLeft className="h-3.5 w-3.5" />,
   divider: <Minus className="h-3.5 w-3.5" />,
   image: <ImageIcon className="h-3.5 w-3.5" />,
+  link: <Link2 className="h-3.5 w-3.5" />,
 }
 
 const TYPE_LABEL: Record<FieldConfig["type"], string> = {
@@ -35,11 +39,13 @@ const TYPE_LABEL: Record<FieldConfig["type"], string> = {
   dropdown: "רשימה נפתחת",
   multiselect: "בחירה מרובה",
   entry_exit: "כניסה / יציאה",
+  signature: "חתימה",
   heading: "כותרת ראשית",
   subheading: "כותרת משנה",
   paragraph: "פסקת טקסט",
   divider: "קו הפרדה",
   image: "תמונה",
+  link: "לינק",
 }
 
 interface FieldItemProps {
