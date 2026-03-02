@@ -47,13 +47,13 @@ export function ResponsesTable({ fields, responses }: ResponsesTableProps) {
       <Table>
         <TableHeader>
           <TableRow className="bg-neutral-50">
-            <TableHead className="text-xs font-semibold text-neutral-500 w-32">
+            <TableHead className="text-xs font-semibold text-neutral-500 w-32 text-right">
               זמן שליחה
             </TableHead>
             {fields.map((f) => (
               <TableHead
                 key={f.id}
-                className="text-xs font-semibold text-neutral-500 min-w-[140px]"
+                className="text-xs font-semibold text-neutral-500 min-w-[140px] text-right"
               >
                 {f.label || "ללא שם"}
               </TableHead>
@@ -63,7 +63,7 @@ export function ResponsesTable({ fields, responses }: ResponsesTableProps) {
         <TableBody>
           {responses.map((response) => (
             <TableRow key={response.id} className="hover:bg-neutral-50">
-              <TableCell className="text-xs text-neutral-500 whitespace-nowrap">
+              <TableCell className="text-xs text-neutral-500 whitespace-nowrap text-right">
                 {new Date(response.submitted_at).toLocaleDateString("he-IL", {
                   month: "short",
                   day: "numeric",
@@ -72,7 +72,7 @@ export function ResponsesTable({ fields, responses }: ResponsesTableProps) {
                 })}
               </TableCell>
               {fields.map((f) => (
-                <TableCell key={f.id} className="max-w-[200px] truncate">
+                <TableCell key={f.id} className="max-w-[200px] truncate text-right">
                   {formatValue(response.data[f.id])}
                 </TableCell>
               ))}

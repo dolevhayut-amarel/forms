@@ -13,6 +13,8 @@ import {
   Globe,
   EyeOff,
   Users,
+  Link2,
+  Inbox,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -31,8 +33,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { ResponsesTable } from "@/components/results/responses-table"
 import { deleteForm, updateForm } from "@/lib/actions/forms"
-import type { Form } from "@/lib/types"
+import { getResponses } from "@/lib/actions/responses"
+import type { Form, FormResponse } from "@/lib/types"
 
 interface FormCardProps {
   form: Form
@@ -43,6 +47,9 @@ export function FormCard({ form, responseCount }: FormCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [toggling, setToggling] = useState(false)
+  const [submissionsOpen, setSubmissionsOpen] = useState(false)
+  const [submissions, setSubmissions] = useState<FormResponse[]>([])
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false)
 
   async function handleDelete() {
     setDeleting(true)
@@ -74,6 +81,20 @@ export function FormCard({ form, responseCount }: FormCardProps) {
         : `/f/${form.id}`
     navigator.clipboard.writeText(url)
     toast.success("הקישור הועתק!")
+  }
+
+  async function handleOpenSubmissions() {
+    setSubmissionsOpen(true)
+    if (submissions.length === 0) {
+      setLoadingSubmissions(true)
+      const result = await getResponses(form.id)
+      if (result.error) {
+        toast.error("שגיאה בטעינת ההגשות")
+      } else {
+        setSubmissions(result.responses)
+      }
+      setLoadingSubmissions(false)
+    }
   }
 
   const formattedDate = new Date(form.created_at).toLocaleDateString("he-IL", {
@@ -204,6 +225,34 @@ export function FormCard({ form, responseCount }: FormCardProps) {
           </div>
         </div>
 
+        {/* Quick action buttons */}
+        <div className="relative z-10 flex items-center gap-1.5 border-t border-neutral-100 pt-3 -mx-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopyLink}
+            className="h-7 flex-1 text-xs text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 rounded-lg gap-1.5"
+          >
+            <Link2 className="h-3.5 w-3.5" />
+            העתק קישור
+          </Button>
+          <div className="w-px h-4 bg-neutral-200 shrink-0" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleOpenSubmissions}
+            className="h-7 flex-1 text-xs text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 rounded-lg gap-1.5"
+          >
+            <Inbox className="h-3.5 w-3.5" />
+            הגשות
+            {responseCount > 0 && (
+              <span className="bg-orange-100 text-orange-700 rounded-full px-1.5 py-0 text-[10px] font-semibold leading-4">
+                {responseCount}
+              </span>
+            )}
+          </Button>
+        </div>
+
         {/* Click overlay */}
         <Link
           href={`/forms/${form.id}`}
@@ -227,6 +276,52 @@ export function FormCard({ form, responseCount }: FormCardProps) {
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting ? "מוחק…" : "מחק"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Submissions quick-view dialog */}
+      <Dialog open={submissionsOpen} onOpenChange={setSubmissionsOpen}>
+        <DialogContent className="rounded-2xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <Inbox className="h-4 w-4 text-orange-600" />
+              הגשות — {form.name}
+            </DialogTitle>
+            <DialogDescription>
+              {loadingSubmissions
+                ? "טוען הגשות…"
+                : submissions.length === 0
+                ? "אין הגשות עדיין לטופס זה."
+                : `${submissions.length} ${submissions.length === 1 ? "הגשה" : "הגשות"}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto min-h-0">
+            {loadingSubmissions ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="h-6 w-6 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+              </div>
+            ) : (
+              <ResponsesTable
+                fields={form.fields.filter(
+                  (f) => !["heading", "subheading", "paragraph", "divider", "image", "link"].includes(f.type)
+                )}
+                responses={submissions}
+              />
+            )}
+          </div>
+
+          <DialogFooter className="shrink-0 border-t border-neutral-100 pt-3 mt-0">
+            <Button variant="outline" onClick={() => setSubmissionsOpen(false)} className="rounded-xl">
+              סגור
+            </Button>
+            <Button asChild className="rounded-xl bg-orange-600 hover:bg-orange-500 text-white border-0">
+              <Link href={`/forms/${form.id}/results`} onClick={() => setSubmissionsOpen(false)}>
+                <BarChart2 className="h-4 w-4 me-1.5" />
+                צפה בדוח המלא
+              </Link>
             </Button>
           </DialogFooter>
         </DialogContent>

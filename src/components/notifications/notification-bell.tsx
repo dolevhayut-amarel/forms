@@ -64,6 +64,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
       <DropdownMenuContent
         align="end"
         sideOffset={8}
+        dir="rtl"
         className="w-80 rounded-2xl p-0 shadow-xl border border-neutral-200 overflow-hidden"
       >
         {/* Header */}
