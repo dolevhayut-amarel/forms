@@ -33,6 +33,29 @@ export function isLayoutField(type: FieldType): type is LayoutFieldType {
 
 // ─── Field config ─────────────────────────────────────────────────────────────
 
+// ─── Conditional logic ────────────────────────────────────────────────────────
+
+export type ConditionOperator =
+  | "equals"
+  | "not_equals"
+  | "contains"
+  | "not_contains"
+  | "is_empty"
+  | "is_not_empty"
+  | "greater_than"
+  | "less_than"
+
+export interface ConditionRule {
+  fieldId: string
+  operator: ConditionOperator
+  value?: string          // omitted for is_empty / is_not_empty
+}
+
+export interface FieldCondition {
+  match: "all" | "any"   // AND / OR between rules
+  rules: ConditionRule[]
+}
+
 // ─── Text field validation ────────────────────────────────────────────────────
 
 export type TextValidationType =
@@ -69,6 +92,7 @@ export interface FieldConfig {
   step?: number                   // number field: step increment
   content?: string                // paragraph body text; image URL alternative
   validation?: FieldValidation    // text field validation rule
+  conditions?: FieldCondition     // visibility rules — shown when conditions met
   attendance_role?: "id_number" | "name" | "division" | "direction"
 }
 

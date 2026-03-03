@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { toast } from "sonner"
-import { Loader2, CheckCircle2, LogIn, LogOut } from "lucide-react"
+import { Loader2, CheckCircle2, LogIn, LogOut, BookmarkCheck, Bookmark } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TextField } from "./fields/text-field"
 import { LongAnswerField } from "./fields/long-answer-field"
@@ -22,9 +22,11 @@ import {
   LinkElement,
 } from "./fields/layout-elements"
 import { SignatureField } from "./fields/signature-field"
+import { RememberDialog, MEMORY_KEY, isSaveableField, type FormMemory } from "./remember-dialog"
 import { submitResponse } from "@/lib/actions/responses"
 import { isLayoutField, type FieldConfig, type Form } from "@/lib/types"
 import { validateTextValue } from "@/lib/field-validation"
+import { isFieldVisible } from "@/lib/conditions"
 
 interface FormRendererProps {
   form: Form
@@ -33,6 +35,25 @@ interface FormRendererProps {
 type FormValues = Record<string, string | string[]>
 type FormErrors = Record<string, string>
 
+// ─── Read saved memory from localStorage (safe for SSR) ───────────────────────
+
+function readMemory(formId: string): FormMemory | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = localStorage.getItem(MEMORY_KEY(formId))
+    return raw ? (JSON.parse(raw) as FormMemory) : null
+  } catch {
+    return null
+  }
+}
+
+function hasActiveMemory(formId: string): boolean {
+  const m = readMemory(formId)
+  return !!m && m.savedFieldIds.length > 0
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export function FormRenderer({ form }: FormRendererProps) {
   // Only input fields participate in form state
   const inputFields = form.fields.filter((f) => !isLayoutField(f.type))
@@ -40,6 +61,7 @@ export function FormRenderer({ form }: FormRendererProps) {
   const redirectUrl = form.settings?.redirect_url ?? ""
 
   const [values, setValues] = useState<FormValues>(() => {
+    // 1. Build initial values from field default_value
     const initial: FormValues = {}
     inputFields.forEach((f) => {
       if (f.default_value !== undefined) {
@@ -56,15 +78,45 @@ export function FormRenderer({ form }: FormRendererProps) {
         initial[f.id] = f.type === "multiselect" ? [] : ""
       }
     })
+
+    // 2. Overlay saved memory — higher priority than default_value
+    const memory = readMemory(form.id)
+    if (memory) {
+      memory.savedFieldIds.forEach((id) => {
+        if (id in initial && memory.values[id] !== undefined) {
+          initial[id] = memory.values[id]
+        }
+      })
+    }
+
     return initial
   })
+
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [rememberOpen, setRememberOpen] = useState(false)
+
+  // Track whether memory is active so we can show the indicator reactively
+  const [memoryActive, setMemoryActive] = useState(() => hasActiveMemory(form.id))
+
+  // Reactive visibility — recomputed whenever any value changes
+  const visibleFieldIds = useMemo(
+    () =>
+      new Set(
+        form.fields
+          .filter((f) => isFieldVisible(f, values))
+          .map((f) => f.id)
+      ),
+    [form.fields, values]
+  )
 
   const submitButtonLabel =
     form.settings?.submit_label?.trim() ||
     (form.form_type === "attendance" ? "שלח דיווח" : "שלח")
+
+  // Only show the remember button if the form has saveable fields
+  const hasSaveableFields = form.fields.some(isSaveableField)
 
   function setValue(fieldId: string, val: string | string[]) {
     setValues((prev) => ({ ...prev, [fieldId]: val }))
@@ -79,7 +131,9 @@ export function FormRenderer({ form }: FormRendererProps) {
 
   function validate(): boolean {
     const newErrors: FormErrors = {}
-    inputFields.forEach((f) => {
+    inputFields
+      .filter((f) => visibleFieldIds.has(f.id))   // skip hidden fields
+      .forEach((f) => {
       const val = values[f.id]
 
       // Required check
@@ -133,7 +187,11 @@ export function FormRenderer({ form }: FormRendererProps) {
     if (!validate()) return
     setSubmitting(true)
     try {
-      const result = await submitResponse(form.id, values)
+      // Exclude hidden fields from the submission payload
+      const submittableValues = Object.fromEntries(
+        Object.entries(values).filter(([id]) => visibleFieldIds.has(id))
+      )
+      const result = await submitResponse(form.id, submittableValues)
       if (result.error) {
         toast.error(result.error)
       } else {
@@ -149,6 +207,12 @@ export function FormRenderer({ form }: FormRendererProps) {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  function handleRememberClose() {
+    setRememberOpen(false)
+    // Refresh the indicator after dialog closes
+    setMemoryActive(hasActiveMemory(form.id))
   }
 
   if (submitted) {
@@ -192,49 +256,90 @@ export function FormRenderer({ form }: FormRendererProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
-      <div className="space-y-6 mb-8">
-        {form.fields.map((field) => (
-          <div key={field.id} id={`field-${field.id}`}>
-            <FieldRenderer
-              field={field}
-              value={isLayoutField(field.type) ? "" : values[field.id]}
-              error={errors[field.id]}
-              onChange={(val) => setValue(field.id, val)}
-            />
+    <>
+      <form onSubmit={handleSubmit} noValidate>
+        <div className="space-y-6 mb-8">
+          {form.fields
+            // Layout fields are always shown; input fields respect conditions
+            .filter((f) => isLayoutField(f.type) || visibleFieldIds.has(f.id))
+            .map((field) => (
+              <div key={field.id} id={`field-${field.id}`}>
+                <FieldRenderer
+                  field={field}
+                  value={isLayoutField(field.type) ? "" : values[field.id]}
+                  error={errors[field.id]}
+                  onChange={(val) => setValue(field.id, val)}
+                />
+              </div>
+            ))}
+        </div>
+
+        {/* Remember button — shown above submit when saveable fields exist */}
+        {hasSaveableFields && (
+          <div className="flex justify-center mb-4">
+            <button
+              type="button"
+              onClick={() => setRememberOpen(true)}
+              className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-600 transition-colors group"
+            >
+              {memoryActive ? (
+                <>
+                  <BookmarkCheck className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                  <span className="text-green-600 font-medium">תשובות נשמרות</span>
+                  <span className="text-neutral-300">·</span>
+                  <span className="group-hover:underline">ערוך</span>
+                </>
+              ) : (
+                <>
+                  <Bookmark className="h-3.5 w-3.5 shrink-0" />
+                  <span className="group-hover:underline">זכור את התשובות שלי לפעמים הבאות</span>
+                </>
+              )}
+            </button>
           </div>
-        ))}
-      </div>
+        )}
 
-      {/* Desktop submit */}
-      <div className="hidden sm:block">
-        <Button
-          type="submit"
-          className="w-full h-12 rounded-xl font-semibold text-base"
-          disabled={submitting}
-        >
-          {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : submitButtonLabel}
-        </Button>
-      </div>
-
-      {/* Mobile sticky submit */}
-      <div
-        className="sm:hidden fixed bottom-0 start-0 end-0 z-20 px-4 bg-white/95 backdrop-blur-md border-t border-neutral-200"
-        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
-      >
-        <div className="pt-3">
+        {/* Desktop submit */}
+        <div className="hidden sm:block">
           <Button
             type="submit"
-            className="w-full h-14 rounded-2xl font-bold text-base shadow-sm"
+            className="w-full h-12 rounded-xl font-semibold text-base"
             disabled={submitting}
           >
             {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : submitButtonLabel}
           </Button>
         </div>
-      </div>
-    </form>
+
+        {/* Mobile sticky submit */}
+        <div
+          className="sm:hidden fixed bottom-0 start-0 end-0 z-20 px-4 bg-white/95 backdrop-blur-md border-t border-neutral-200"
+          style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+        >
+          <div className="pt-3">
+            <Button
+              type="submit"
+              className="w-full h-14 rounded-2xl font-bold text-base shadow-sm"
+              disabled={submitting}
+            >
+              {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : submitButtonLabel}
+            </Button>
+          </div>
+        </div>
+      </form>
+
+      {/* Remember dialog — outside the form to avoid submit interference */}
+      <RememberDialog
+        open={rememberOpen}
+        onClose={handleRememberClose}
+        formId={form.id}
+        fields={form.fields}
+        currentValues={values}
+      />
+    </>
   )
 }
+
+// ─── Field renderer ───────────────────────────────────────────────────────────
 
 function FieldRenderer({
   field,

@@ -26,11 +26,23 @@ export function SubheadingElement({ field }: LayoutElementProps) {
 }
 
 export function ParagraphElement({ field }: LayoutElementProps) {
-  const text = field.content ?? field.label
-  if (!text) return null
+  const content = field.content ?? field.label
+  if (!content) return null
+
+  const isHtml = content.trimStart().startsWith("<")
+  if (isHtml) {
+    return (
+      <div
+        className="rich-text text-base text-neutral-600 leading-relaxed"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: content is sanitized TipTap HTML output
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    )
+  }
+
   return (
     <p className="text-base text-neutral-600 leading-relaxed whitespace-pre-wrap">
-      {text}
+      {content}
     </p>
   )
 }

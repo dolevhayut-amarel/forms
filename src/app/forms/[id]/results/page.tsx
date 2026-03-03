@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator"
 import { ResponsesTable } from "@/components/results/responses-table"
 import { FieldStats } from "@/components/results/field-stats"
 import { CopyLinkButton } from "@/components/results/copy-link-button"
+import { ShareFormDialog } from "@/components/results/share-form-dialog"
 import { AppHeader } from "@/components/layout/amarel-nav"
 import { createClient } from "@/lib/supabase/server"
 import { rowToForm, rowToResponse } from "@/lib/types"
@@ -101,6 +102,7 @@ export default async function ResultsPage({ params }: Props) {
                 </Link>
               </Button>
               <CopyLinkButton formId={id} variant="ghost-dark" />
+              <ShareFormDialog formId={id} formName={form.name} variant="ghost-dark" />
             </div>
           </div>
         </div>

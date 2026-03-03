@@ -26,6 +26,8 @@ import {
 } from "@/lib/types"
 import { VALIDATION_PRESETS } from "@/lib/field-validation"
 import { uploadFormImage } from "@/lib/actions/storage"
+import { ConditionEditor } from "./condition-editor"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 
 const TYPE_LABEL: Record<FieldConfig["type"], string> = {
   text: "תשובה קצרה",
@@ -49,9 +51,10 @@ const TYPE_LABEL: Record<FieldConfig["type"], string> = {
 interface FieldEditorPanelProps {
   field: FieldConfig
   onChange: (updated: FieldConfig) => void
+  allFields: FieldConfig[]
 }
 
-export function FieldEditorPanel({ field, onChange }: FieldEditorPanelProps) {
+export function FieldEditorPanel({ field, onChange, allFields }: FieldEditorPanelProps) {
   const [newOption, setNewOption] = useState("")
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -184,27 +187,16 @@ export function FieldEditorPanel({ field, onChange }: FieldEditorPanelProps) {
       )}
 
       {field.type === "paragraph" && (
-        <>
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
-              תוכן הפסקה
-            </Label>
-            <Textarea
-              value={field.content ?? ""}
-              onChange={(e) => update({ content: e.target.value })}
-              placeholder="הכנס את תוכן הפסקה כאן…"
-              rows={5}
-              className="text-sm rounded-xl resize-y"
-            />
-          </div>
-          {(field.content ?? "").length > 0 && (
-            <div className="bg-neutral-50 rounded-xl p-3 border border-neutral-100">
-              <p className="text-sm text-neutral-600 leading-relaxed whitespace-pre-wrap">
-                {field.content}
-              </p>
-            </div>
-          )}
-        </>
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+            תוכן הפסקה
+          </Label>
+          <RichTextEditor
+            value={field.content ?? ""}
+            onChange={(html) => update({ content: html })}
+            placeholder="הכנס את תוכן הפסקה כאן…"
+          />
+        </div>
       )}
 
       {field.type === "divider" && (
@@ -835,6 +827,15 @@ export function FieldEditorPanel({ field, onChange }: FieldEditorPanelProps) {
               className="rounded-md"
             />
           </div>
+
+          <Separator />
+
+          {/* Conditional logic */}
+          <ConditionEditor
+            field={field}
+            allFields={allFields}
+            onChange={(conditions) => update({ conditions })}
+          />
         </>
       )}
     </div>

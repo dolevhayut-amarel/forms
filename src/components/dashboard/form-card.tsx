@@ -12,8 +12,9 @@ import {
   Globe,
   EyeOff,
   Users,
-  Link2,
   Inbox,
+  Share2,
+  QrCode,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -33,6 +34,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { ResponsesTable } from "@/components/results/responses-table"
+import { ShareFormDialog } from "@/components/results/share-form-dialog"
 import { deleteForm, updateForm } from "@/lib/actions/forms"
 import { getResponses } from "@/lib/actions/responses"
 import type { Form, FormResponse } from "@/lib/types"
@@ -61,6 +63,7 @@ export function FormCard({ form, responseCount }: FormCardProps) {
   const [submissionsOpen, setSubmissionsOpen] = useState(false)
   const [submissions, setSubmissions] = useState<FormResponse[]>([])
   const [loadingSubmissions, setLoadingSubmissions] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   async function handleDelete() {
     setDeleting(true)
@@ -171,6 +174,10 @@ export function FormCard({ form, responseCount }: FormCardProps) {
                 <Copy className="h-3.5 w-3.5" />
                 העתק קישור
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShareOpen(true)} className="flex items-center gap-2">
+                <QrCode className="h-3.5 w-3.5" />
+                QR וקישור קצר
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleTogglePublish}
@@ -241,11 +248,11 @@ export function FormCard({ form, responseCount }: FormCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleCopyLink}
+            onClick={() => setShareOpen(true)}
             className="h-7 flex-1 text-xs text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 rounded-lg gap-1.5"
           >
-            <Link2 className="h-3.5 w-3.5" />
-            העתק קישור
+            <Share2 className="h-3.5 w-3.5" />
+            שיתוף / QR
           </Button>
           <div className="w-px h-4 bg-neutral-200 shrink-0" />
           <Button
@@ -291,6 +298,15 @@ export function FormCard({ form, responseCount }: FormCardProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Share / QR dialog */}
+      <ShareFormDialog
+        formId={form.id}
+        formName={form.name}
+        noTrigger
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+      />
 
       {/* Submissions quick-view dialog */}
       <Dialog open={submissionsOpen} onOpenChange={setSubmissionsOpen}>

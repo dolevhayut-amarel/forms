@@ -398,7 +398,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4" style={{ direction: "rtl" }}>
               {selectedField ? (
-                <FieldEditorPanel field={selectedField} onChange={updateField} />
+                <FieldEditorPanel field={selectedField} onChange={updateField} allFields={fields} />
               ) : (
                 <div className="space-y-5">
                   {/* Title alignment */}
