@@ -15,20 +15,20 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://forms.amarel.net"
   ),
   title: {
-    default: "אמרל טפסים",
-    template: "%s | אמרל טפסים",
+    default: "מערכת סקרים - אמרל",
+    template: "%s | מערכת סקרים - אמרל",
   },
   description:
-    "מערכת ניהול טפסים ומשאלות של אמרל — בניה קלה, פרסום מיידי ומעקב תגובות בזמן אמת",
-  keywords: ["טפסים", "משאלות", "אמרל", "דיווח נוכחות", "forms", "amarel"],
+    "מערכת ניהול טפסים וסקרים של אמרל — בניה קלה, פרסום מיידי ומעקב תגובות בזמן אמת",
+  keywords: ["טפסים", "סקרים", "אמרל", "דיווח נוכחות", "forms", "amarel"],
   authors: [{ name: "Amarel" }],
   creator: "Amarel",
   openGraph: {
     type: "website",
     locale: "he_IL",
-    siteName: "אמרל טפסים",
-    title: "אמרל טפסים",
-    description: "מערכת ניהול טפסים ומשאלות של אמרל",
+    siteName: "מערכת סקרים - אמרל",
+    title: "מערכת סקרים - אמרל",
+    description: "מערכת ניהול טפסים וסקרים של אמרל",
     images: [{ url: "/logos/amarel.png", width: 512, height: 512, alt: "Amarel" }],
   },
   icons: {
