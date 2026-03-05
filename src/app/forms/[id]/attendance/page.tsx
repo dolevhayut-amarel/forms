@@ -167,10 +167,10 @@ export default async function AttendancePage({ params, searchParams }: Props) {
         <div className="max-w-5xl mx-auto">
         <div className="bg-[#2D4458] rounded-2xl h-12 flex items-center justify-between gap-4 px-4">
           <div className="flex items-center gap-2 min-w-0">
-            <Button variant="ghost" size="sm" asChild className="h-7 rounded-lg gap-1 text-xs text-white/60 hover:text-white hover:bg-white/10 px-2">
-              <Link href="/dashboard"><ArrowRight className="h-3.5 w-3.5" /> הטפסים שלי</Link>
+            <Button variant="ghost" size="sm" asChild className="h-7 rounded-lg gap-1 text-xs text-white/60 hover:text-white hover:bg-white/10 px-2 min-h-[44px]">
+              <Link href="/dashboard"><ArrowRight className="h-3.5 w-3.5" aria-hidden /> הטפסים שלי</Link>
             </Button>
-            <span className="text-white/30 text-xs">/</span>
+            <span className="text-white/50 text-xs" aria-hidden>/</span>
             <span className="text-white/80 text-xs font-medium truncate max-w-[160px]">{form.name}</span>
             <Badge className="text-xs rounded-md shrink-0 border bg-white/10 text-white/70 border-white/20 px-1.5 py-0">
               <Users className="h-3 w-3 me-1" />
@@ -179,11 +179,11 @@ export default async function AttendancePage({ params, searchParams }: Props) {
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <Button variant="ghost" size="sm" asChild className="rounded-lg gap-1.5 h-7 text-xs text-white/70 hover:text-white hover:bg-white/10 hidden sm:flex">
-              <Link href={`/forms/${id}`}><Pencil className="h-3 w-3" /> ערוך</Link>
+            <Button variant="ghost" size="sm" asChild className="rounded-lg gap-1.5 h-7 text-xs text-white/70 hover:text-white hover:bg-white/10 hidden sm:flex min-h-[44px]">
+              <Link href={`/forms/${id}`}><Pencil className="h-3 w-3" aria-hidden /> ערוך</Link>
             </Button>
-            <Button variant="ghost" size="sm" asChild className="rounded-lg gap-1.5 h-7 text-xs text-white/70 hover:text-white hover:bg-white/10">
-              <Link href={`/f/${id}`} target="_blank"><Eye className="h-3 w-3" /> תצוגה</Link>
+            <Button variant="ghost" size="sm" asChild className="rounded-lg gap-1.5 h-7 text-xs text-white/70 hover:text-white hover:bg-white/10 min-h-[44px]">
+              <Link href={`/f/${id}`} target="_blank" rel="noopener noreferrer"><Eye className="h-3 w-3" aria-hidden /> תצוגה</Link>
             </Button>
             <CopyLinkButton formId={id} variant="ghost-dark" />
           </div>
@@ -191,14 +191,14 @@ export default async function AttendancePage({ params, searchParams }: Props) {
         </div>
       </div>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8" tabIndex={-1}>
 
         {/* Live presence — today only */}
         {isToday && (
-          <div className="space-y-4">
+          <section className="space-y-4" aria-labelledby="presence-heading">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <h2 className="text-sm font-semibold text-neutral-700">נוכחים עכשיו במשרד</h2>
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" aria-hidden />
+              <h2 id="presence-heading" className="text-sm font-semibold text-neutral-700">נוכחים עכשיו במשרד</h2>
               <span className="text-xs text-neutral-400">({inOffice.length} אנשים)</span>
             </div>
 
@@ -217,7 +217,7 @@ export default async function AttendancePage({ params, searchParams }: Props) {
                       <span className="text-xs text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-lg">
                         במשרד
                       </span>
-                      <UserCheck className="h-4 w-4 text-green-500" />
+                      <UserCheck className="h-4 w-4 text-green-500" aria-hidden />
                     </div>
                     <p className="font-semibold text-sm text-neutral-900 truncate">{p.name || "—"}</p>
                     {p.division ? (
@@ -228,7 +228,7 @@ export default async function AttendancePage({ params, searchParams }: Props) {
                       <span className="text-xs text-neutral-400">—</span>
                     )}
                     <div className="flex items-center gap-1 text-xs text-neutral-400">
-                      <Clock className="h-3 w-3" />
+                      <Clock className="h-3 w-3" aria-hidden />
                       {new Date(p.submitted_at).toLocaleTimeString("he-IL", {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -247,14 +247,14 @@ export default async function AttendancePage({ params, searchParams }: Props) {
             )}
 
             <Separator />
-          </div>
+          </section>
         )}
 
         {/* Date filter + log */}
-        <div className="space-y-4">
+        <section className="space-y-4" aria-labelledby="log-heading">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-neutral-700">יומן דיווחים</h2>
+              <h2 id="log-heading" className="text-sm font-semibold text-neutral-700">יומן דיווחים</h2>
               <p className="text-xs text-neutral-400 mt-0.5">{formattedSelectedDate}</p>
             </div>
             <AttendanceDateFilter selectedDate={selectedDate} formId={id} />
@@ -266,25 +266,25 @@ export default async function AttendancePage({ params, searchParams }: Props) {
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
-              <Table>
+              <Table aria-label="יומן דיווחי נוכחות">
                 <TableHeader>
                   <TableRow className="bg-neutral-50">
-                    <TableHead className="text-xs font-semibold text-neutral-500 w-28 text-right">שעה</TableHead>
+                    <TableHead className="text-xs font-semibold text-neutral-500 w-28 text-right" scope="col">שעה</TableHead>
                     {nameField && (
-                      <TableHead className="text-xs font-semibold text-neutral-500 text-right">שם</TableHead>
+                      <TableHead className="text-xs font-semibold text-neutral-500 text-right" scope="col">שם</TableHead>
                     )}
                     {idField && (
-                      <TableHead className="text-xs font-semibold text-neutral-500 hidden sm:table-cell text-right">
+                      <TableHead className="text-xs font-semibold text-neutral-500 hidden sm:table-cell text-right" scope="col">
                         ת.ז
                       </TableHead>
                     )}
                     {divField && (
-                      <TableHead className="text-xs font-semibold text-neutral-500 hidden md:table-cell text-right">
+                      <TableHead className="text-xs font-semibold text-neutral-500 hidden md:table-cell text-right" scope="col">
                         חטיבה
                       </TableHead>
                     )}
                     {dirField && (
-                      <TableHead className="text-xs font-semibold text-neutral-500 w-24 text-right">
+                      <TableHead className="text-xs font-semibold text-neutral-500 w-24 text-right" scope="col">
                         סטטוס
                       </TableHead>
                     )}
@@ -328,9 +328,9 @@ export default async function AttendancePage({ params, searchParams }: Props) {
                               }`}
                             >
                               {isEntry ? (
-                                <UserCheck className="h-3 w-3" />
+                                <UserCheck className="h-3 w-3" aria-hidden />
                               ) : (
-                                <UserX className="h-3 w-3" />
+                                <UserX className="h-3 w-3" aria-hidden />
                               )}
                               {dir || "—"}
                             </span>
@@ -358,7 +358,7 @@ export default async function AttendancePage({ params, searchParams }: Props) {
               </div>
             </div>
           )}
-        </div>
+        </section>
 
         {/* Export hint */}
         <div className="flex items-center justify-between bg-neutral-100 rounded-2xl px-5 py-4">

@@ -145,7 +145,7 @@ export default async function AnalyticsPage({ searchParams }: Props) {
     <div className="min-h-screen bg-neutral-50">
       <AppHeader userId={user.id} userEmail={user.email ?? undefined} activePath="analytics" />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <main id="main-content" className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8" tabIndex={-1}>
 
         {/* Page header */}
         <div className="flex items-start justify-between flex-wrap gap-4">

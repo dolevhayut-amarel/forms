@@ -16,7 +16,7 @@ export function AmarelLogo({ size = "default" }: { size?: "default" | "sm" }) {
       <span className={`font-bold text-white ${size === "sm" ? "text-xs" : "text-sm"}`}>
         אמרל
       </span>
-      <span className={`text-white/40 ${size === "sm" ? "text-[10px]" : "text-xs"}`}>
+      <span className={`text-white/50 ${size === "sm" ? "text-[10px]" : "text-xs"}`} aria-hidden>
         |
       </span>
       <span
@@ -73,7 +73,7 @@ export function AppHeader({ userId, userEmail, activePath, hasSubBar }: AppHeade
         <div className="w-px h-5 bg-white/15 hidden sm:block shrink-0" />
 
         {/* Nav links */}
-        <nav className="flex items-center gap-1 flex-1">
+        <nav className="flex items-center gap-1 flex-1" aria-label="ניווט ראשי">
           <NavLink href="/dashboard" active={activePath === "dashboard"}>
             <LayoutGrid className="h-3.5 w-3.5" />
             הטפסים שלי
@@ -105,13 +105,14 @@ export function AppHeader({ userId, userEmail, activePath, hasSubBar }: AppHeade
           <Link
             href="/profile"
             title={userEmail ?? "פרופיל"}
-            className={`flex items-center justify-center h-8 w-8 rounded-xl transition-colors ${
+            aria-label={userEmail ? `פרופיל: ${userEmail}` : "פרופיל"}
+            className={`flex items-center justify-center h-8 w-8 rounded-xl transition-colors min-w-[44px] min-h-[44px] ${
               activePath === "profile"
                 ? "bg-white/15 text-white"
                 : "text-white/60 hover:text-white hover:bg-white/10"
             }`}
           >
-            <UserCircle className="h-4 w-4" />
+            <UserCircle className="h-4 w-4" aria-hidden />
           </Link>
 
           {/* Sign out */}

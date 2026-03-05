@@ -42,7 +42,6 @@ import {
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -209,7 +208,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
           ...(publish !== undefined ? { is_published: publish } : {}),
         }
 
-        let result
+        let result: Awaited<ReturnType<typeof createForm>>
         if (isEditing) {
           result = await updateForm(initialForm.id, payload)
         } else {
@@ -235,7 +234,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
         setPublishing(false)
       }
     },
-    [name, description, fields, formType, submitLabel, afterSubmit, redirectUrl, isEditing, initialForm, router]
+    [name, description, fields, formType, submitLabel, afterSubmit, redirectUrl, titleAlign, isEditing, initialForm, router]
   )
 
   return (
@@ -379,6 +378,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
                     עריכת שדה
                   </span>
                   <button
+                    type="button"
                     onClick={openSettings}
                     className="text-xs text-neutral-400 hover:text-neutral-600"
                   >

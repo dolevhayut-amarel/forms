@@ -14,7 +14,7 @@ export default function DashboardLoading() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <main id="main-content" className="max-w-6xl mx-auto px-4 sm:px-6 py-8" tabIndex={-1}>
         <div className="flex items-center justify-between mb-6">
           <div>
             <Skeleton className="w-24 h-5 rounded mb-1.5" />
@@ -24,9 +24,9 @@ export default function DashboardLoading() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {(["card-1", "card-2", "card-3", "card-4", "card-5", "card-6"] as const).map((key) => (
             <div
-              key={i}
+              key={key}
               className="bg-white border border-neutral-200 rounded-2xl p-5 space-y-4"
             >
               <div className="space-y-1.5">

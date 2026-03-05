@@ -48,9 +48,12 @@ export function NotificationBell({ userId }: NotificationBellProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-9 w-9 rounded-xl text-white/80 hover:text-white hover:bg-white/10 focus-visible:ring-white/30"
+          aria-label={unreadCount > 0 ? `התראות, ${unreadCount} לא נקראו` : "התראות"}
+          aria-haspopup="true"
+          aria-expanded={open}
+          className="relative h-9 w-9 min-w-[44px] min-h-[44px] rounded-xl text-white/80 hover:text-white hover:bg-white/10 focus-visible:ring-white/30"
         >
-          <Bell className="h-4.5 w-4.5" />
+          <Bell className="h-4.5 w-4.5" aria-hidden />
 
           {/* Unread badge */}
           {unreadCount > 0 && (
@@ -80,6 +83,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
 
           {unreadCount > 0 && (
             <button
+              type="button"
               onClick={() => markAllAsRead()}
               className="flex items-center gap-1 text-xs text-[hsl(221_83%_53%)] hover:underline font-medium"
             >

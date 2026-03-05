@@ -53,6 +53,13 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
       <body className={`${googleSans.variable} min-h-screen antialiased`}>
+        {/* Skip link for keyboard/screen reader users (WCAG 2.4.1, IS 5568) */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:start-4 focus:z-[100] focus:bg-background focus:px-4 focus:py-2 focus:rounded-md focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none"
+        >
+          דלג לתוכן הראשי
+        </a>
         {children}
         <Toaster />
       </body>

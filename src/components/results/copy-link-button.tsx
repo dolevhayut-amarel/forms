@@ -21,23 +21,31 @@ export function CopyLinkButton({ formId, variant = "outline" }: CopyLinkButtonPr
   }
 
   return (
-    <Button
-      variant={variant === "ghost-dark" ? "ghost" : "outline"}
-      size="sm"
-      onClick={handleCopy}
-      className={cn(
-        "gap-1.5 text-xs",
-        variant === "ghost-dark"
-          ? "h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 border-0"
-          : "h-8 rounded-lg border-neutral-200"
+    <>
+      {copied && (
+        <output className="sr-only" aria-live="polite" aria-atomic="true">
+          הקישור הועתק ללוח
+        </output>
       )}
-    >
-      {copied ? (
-        <Check className={cn("h-3.5 w-3.5", variant === "ghost-dark" ? "text-green-400" : "text-green-500")} />
-      ) : (
-        <Copy className="h-3.5 w-3.5" />
-      )}
-      {copied ? "הועתק!" : "העתק קישור"}
-    </Button>
+      <Button
+        variant={variant === "ghost-dark" ? "ghost" : "outline"}
+        size="sm"
+        onClick={handleCopy}
+        aria-label="העתק קישור לטופס"
+        className={cn(
+          "gap-1.5 text-xs min-h-[44px]",
+          variant === "ghost-dark"
+            ? "h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 border-0"
+            : "h-8 rounded-lg border-neutral-200"
+        )}
+      >
+        {copied ? (
+          <Check className={cn("h-3.5 w-3.5", variant === "ghost-dark" ? "text-green-400" : "text-green-500")} aria-hidden />
+        ) : (
+          <Copy className="h-3.5 w-3.5" aria-hidden />
+        )}
+        {copied ? "הועתק!" : "העתק קישור"}
+      </Button>
+    </>
   )
 }

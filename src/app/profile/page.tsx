@@ -18,7 +18,7 @@ export default async function ProfilePage() {
     <div className="min-h-screen bg-neutral-50">
       <AppHeader userId={user.id} userEmail={user.email ?? undefined} activePath="profile" />
 
-      <main className="max-w-lg mx-auto px-4 sm:px-6 py-10">
+      <main id="main-content" className="max-w-lg mx-auto px-4 sm:px-6 py-10" tabIndex={-1}>
         <div className="mb-8">
           <h1 className="text-xl font-semibold text-neutral-900">הפרופיל שלי</h1>
           <p className="text-sm text-neutral-500 mt-0.5">ניהול פרטי חשבון</p>

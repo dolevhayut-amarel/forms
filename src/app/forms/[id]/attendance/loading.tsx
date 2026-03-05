@@ -16,13 +16,13 @@ export default function AttendanceLoading() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8" tabIndex={-1}>
         {/* Presence cards skeleton */}
         <div className="space-y-3">
           <Skeleton className="h-4 w-48 rounded" />
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 rounded-2xl" />
+            {(["row-1", "row-2", "row-3", "row-4"] as const).map((key) => (
+              <Skeleton key={key} className="h-28 rounded-2xl" />
             ))}
           </div>
         </div>

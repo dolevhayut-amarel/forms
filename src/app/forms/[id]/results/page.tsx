@@ -1,7 +1,7 @@
 import { Metadata } from "next"
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { ArrowRight, BarChart2, Eye, Pencil, Users } from "lucide-react"
+import { ArrowRight, Eye, Pencil, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -73,7 +73,7 @@ export default async function ResultsPage({ params }: Props) {
               <Button variant="ghost" size="sm" asChild className="h-7 rounded-lg gap-1 text-xs text-white/60 hover:text-white hover:bg-white/10 px-2">
                 <Link href="/dashboard"><ArrowRight className="h-3.5 w-3.5" /> הטפסים שלי</Link>
               </Button>
-              <span className="text-white/30 text-xs">/</span>
+              <span className="text-white/50 text-xs" aria-hidden>/</span>
               <span className="text-white/80 text-xs font-medium truncate max-w-[180px]">{form.name}</span>
               <Badge className={`text-xs rounded-md shrink-0 border px-1.5 py-0 ${form.is_published ? "bg-green-500/20 text-green-300 border-green-500/30" : "bg-white/10 text-white/50 border-white/20"}`}>
                 {form.is_published ? "מפורסם" : "טיוטה"}
@@ -108,7 +108,7 @@ export default async function ResultsPage({ params }: Props) {
         </div>
       </div>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8" tabIndex={-1}>
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-white rounded-2xl border border-neutral-200 p-4 text-center">

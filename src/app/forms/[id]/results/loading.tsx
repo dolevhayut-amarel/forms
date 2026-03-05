@@ -16,16 +16,16 @@ export default function ResultsLoading() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8" tabIndex={-1}>
         <div className="grid grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 rounded-2xl" />
+          {(["row-1", "row-2", "row-3"] as const).map((key) => (
+            <Skeleton key={key} className="h-20 rounded-2xl" />
           ))}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 rounded-2xl" />
+          {(["card-1", "card-2", "card-3", "card-4"] as const).map((key) => (
+            <Skeleton key={key} className="h-32 rounded-2xl" />
           ))}
         </div>
 

@@ -4,7 +4,7 @@ export default function AnalyticsLoading() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="bg-[#2D4458] h-14" />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <main id="main-content" className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8" tabIndex={-1}>
         <div className="flex items-center justify-between">
           <div className="space-y-1.5">
             <Skeleton className="h-5 w-24 rounded" />

@@ -58,7 +58,7 @@ export default async function DashboardPage() {
         activePath="dashboard"
       />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <main id="main-content" className="max-w-6xl mx-auto px-4 sm:px-6 py-8" tabIndex={-1}>
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-semibold text-neutral-900">הטפסים שלי</h1>
