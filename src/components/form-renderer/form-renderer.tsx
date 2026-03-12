@@ -28,6 +28,7 @@ import {
 import { SignatureField } from "./fields/signature-field"
 import { RememberDialog, MEMORY_KEY, isSaveableField, type FormMemory } from "./remember-dialog"
 import { submitResponse } from "@/lib/actions/responses"
+import ReactMarkdown from "react-markdown"
 import { computeAIField } from "@/lib/actions/ai"
 import { isLayoutField, type FieldConfig, type Form, type FormDataset } from "@/lib/types"
 import { validateTextValue } from "@/lib/field-validation"
@@ -112,8 +113,11 @@ function AiComputedElement({
       <div className="px-4 py-3">
         {result ? (
           <div className="space-y-3">
-            <div className="text-sm text-neutral-800 leading-relaxed whitespace-pre-wrap">
-              {result}
+            <div
+              dir="rtl"
+              className="text-sm text-neutral-800 leading-relaxed [&_div]:space-y-1.5 [&_p]:my-0.5 [&_ul]:list-disc [&_ul]:pr-4 [&_ol]:list-decimal [&_ol]:pr-4 [&_strong]:font-semibold [&_em]:italic"
+            >
+              <ReactMarkdown>{result}</ReactMarkdown>
             </div>
             <button
               type="button"
@@ -606,7 +610,6 @@ function FieldRenderer({
   if (field.type === "image")      return <ImageElement field={field} />
   if (field.type === "link")       return <LinkElement field={field} />
   if (field.type === "section")    return <SectionElement field={field} />
-  if (field.type === "dataset_lookup") return <DatasetLookupElement field={field} datasets={datasets} allValues={allValues} />
   if (field.type === "ai_computed") return <AiComputedElement field={field} allValues={allValues} allFields={allFields} />
 
   // Input fields

@@ -8,25 +8,58 @@ import { zodFunction } from "openai/helpers/zod"
 import { createForm } from "./forms"
 import type { FieldConfig, FieldCondition } from "@/lib/types"
 
+// בחירת מודלים:
+// - gpt-5.4: יצירת טופס + עריכת טופס (reasoning חזק)
+// - gpt-5-nano: חישוב שדה AI (קצר, זול, מהיר)
+const FORM_MODEL = "gpt-5.4"
+const EDITOR_MODEL = "gpt-5.4"
+const COMPUTE_MODEL = "gpt-5-nano"
+
 // ─── Shared field schema (nullable instead of optional for OpenAI compatibility) ─
 
 const AIFieldSchema = z.object({
   type: z.enum([
-    "text", "long_answer", "dropdown", "multiselect", "radio",
-    "checkbox", "number", "date", "star_rating", "entry_exit",
-    "location", "signature", "heading", "subheading", "paragraph", "divider",
+    "text",
+    "long_answer",
+    "dropdown",
+    "multiselect",
+    "radio",
+    "checkbox",
+    "number",
+    "date",
+    "star_rating",
+    "entry_exit",
+    "location",
+    "signature",
+    "heading",
+    "subheading",
+    "paragraph",
+    "divider",
   ]),
   label: z.string(),
   required: z.boolean(),
   placeholder: z.string().nullable(),
   options: z.array(z.string()).nullable(),
   allow_other: z.boolean().nullable(),
-  paragraph_style: z.enum(["default", "info", "success", "warning", "danger"]).nullable(),
-  validation_type: z.enum(["none", "numbers_only", "text_only", "phone_il", "id_il"]).nullable(),
+  paragraph_style: z
+    .enum(["default", "info", "success", "warning", "danger"])
+    .nullable(),
+  validation_type: z
+    .enum(["none", "numbers_only", "text_only", "phone_il", "id_il"])
+    .nullable(),
   date_mode: z.enum(["date", "datetime"]).nullable(),
   default_value_now: z.boolean().nullable(),
   condition_field_label: z.string().nullable(),
-  condition_operator: z.enum(["equals", "not_equals", "contains", "not_contains", "is_empty", "is_not_empty"]).nullable(),
+  condition_operator: z
+    .enum([
+      "equals",
+      "not_equals",
+      "contains",
+      "not_contains",
+      "is_empty",
+      "is_not_empty",
+    ])
+    .nullable(),
   condition_value: z.string().nullable(),
 })
 
@@ -81,11 +114,13 @@ function mapAIFieldsToFieldConfig(aiFields: AIField[]): FieldConfig[] {
       if (sourceId) {
         conditions = {
           match: "all",
-          rules: [{
-            fieldId: sourceId,
-            operator: af.condition_operator,
-            ...(af.condition_value ? { value: af.condition_value } : {}),
-          }],
+          rules: [
+            {
+              fieldId: sourceId,
+              operator: af.condition_operator,
+              ...(af.condition_value ? { value: af.condition_value } : {}),
+            },
+          ],
         }
       }
     }
@@ -109,7 +144,9 @@ function buildFieldConfig(
   if (f.placeholder) config.placeholder = f.placeholder
   if (f.options && f.options.length > 0) config.options = f.options
   if (f.allow_other) config.allow_other = true
-  if (f.paragraph_style && f.paragraph_style !== "default") config.paragraph_style = f.paragraph_style
+  if (f.paragraph_style && f.paragraph_style !== "default") {
+    config.paragraph_style = f.paragraph_style
+  }
   if (f.validation_type && f.validation_type !== "none") {
     config.validation = { type: f.validation_type }
   }
@@ -132,12 +169,15 @@ export async function generateFormWithAI(
     const client = new OpenAI({ apiKey })
 
     const completion = await client.chat.completions.parse({
-      model: "gpt-5.4",
+      model: FORM_MODEL,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: prompt },
       ],
-      response_format: zodResponseFormat(FormGenerationSchema, "form_generation"),
+      response_format: zodResponseFormat(
+        FormGenerationSchema,
+        "form_generation"
+      ),
     })
 
     const parsed = completion.choices[0]?.message?.parsed
@@ -188,8 +228,12 @@ const UpdateFieldParams = z.object({
     placeholder: z.string().nullable(),
     options: z.array(z.string()).nullable(),
     allow_other: z.boolean().nullable(),
-    paragraph_style: z.enum(["default", "info", "success", "warning", "danger"]).nullable(),
-    validation_type: z.enum(["none", "numbers_only", "text_only", "phone_il", "id_il"]).nullable(),
+    paragraph_style: z
+      .enum(["default", "info", "success", "warning", "danger"])
+      .nullable(),
+    validation_type: z
+      .enum(["none", "numbers_only", "text_only", "phone_il", "id_il"])
+      .nullable(),
   }),
 })
 
@@ -218,15 +262,17 @@ ALWAYS respond in Hebrew.
 For nullable fields you don't need, set them to null.`
 
 function serializeFieldsForContext(fields: FieldConfig[]): string {
-  return fields.map((f, i) => {
-    let desc = `${i + 1}. [${f.type}] "${f.label}"`
-    if (f.required) desc += " *חובה"
-    if (f.options?.length) desc += ` (אפשרויות: ${f.options.join(", ")})`
-    if (f.validation) desc += ` [ולידציה: ${f.validation.type}]`
-    if (f.conditions) desc += " [מותנה]"
-    if (f.paragraph_style) desc += ` [סגנון: ${f.paragraph_style}]`
-    return desc
-  }).join("\n")
+  return fields
+    .map((f, i) => {
+      let desc = `${i + 1}. [${f.type}] "${f.label}"`
+      if (f.required) desc += " *חובה"
+      if (f.options?.length) desc += ` (אפשרויות: ${f.options.join(", ")})`
+      if (f.validation) desc += ` [ולידציה: ${f.validation.type}]`
+      if (f.conditions) desc += " [מותנה]"
+      if (f.paragraph_style) desc += ` [סגנון: ${f.paragraph_style}]`
+      return desc
+    })
+    .join("\n")
 }
 
 function applyToolCalls(
@@ -243,7 +289,9 @@ function applyToolCalls(
         const newFields = mapAIFieldsToFieldConfig(parsed.fields)
 
         if (parsed.insert_after_label) {
-          const idx = result.findIndex((f) => f.label === parsed.insert_after_label)
+          const idx = result.findIndex(
+            (f) => f.label === parsed.insert_after_label
+          )
           if (idx !== -1) {
             result.splice(idx + 1, 0, ...newFields)
           } else {
@@ -252,6 +300,7 @@ function applyToolCalls(
         } else {
           result.push(...newFields)
         }
+
         summary.push(`${newFields.length} שדות נוספו`)
         break
       }
@@ -259,18 +308,25 @@ function applyToolCalls(
       case "update_field": {
         const parsed = args as z.infer<typeof UpdateFieldParams>
         const idx = result.findIndex((f) => f.label === parsed.field_label)
+
         if (idx !== -1) {
           const field = { ...result[idx] }
           const u = parsed.updates
+
           if (u.label) field.label = u.label
           if (u.required !== null) field.required = u.required
           if (u.placeholder) field.placeholder = u.placeholder
           if (u.options) field.options = u.options
-          if (u.allow_other !== null) field.allow_other = u.allow_other || undefined
-          if (u.paragraph_style && u.paragraph_style !== "default") field.paragraph_style = u.paragraph_style
+          if (u.allow_other !== null) {
+            field.allow_other = u.allow_other || undefined
+          }
+          if (u.paragraph_style && u.paragraph_style !== "default") {
+            field.paragraph_style = u.paragraph_style
+          }
           if (u.validation_type && u.validation_type !== "none") {
             field.validation = { type: u.validation_type }
           }
+
           result[idx] = field
           summary.push(`"${parsed.field_label}" עודכן`)
         }
@@ -281,6 +337,7 @@ function applyToolCalls(
         const parsed = args as z.infer<typeof RemoveFieldParams>
         const before = result.length
         result = result.filter((f) => f.label !== parsed.field_label)
+
         if (result.length < before) {
           summary.push(`"${parsed.field_label}" הוסר`)
         }
@@ -290,10 +347,14 @@ function applyToolCalls(
       case "reorder_field": {
         const parsed = args as z.infer<typeof ReorderFieldParams>
         const idx = result.findIndex((f) => f.label === parsed.field_label)
+
         if (idx !== -1) {
           const [field] = result.splice(idx, 1)
+
           if (parsed.move_after_label) {
-            const targetIdx = result.findIndex((f) => f.label === parsed.move_after_label)
+            const targetIdx = result.findIndex(
+              (f) => f.label === parsed.move_after_label
+            )
             if (targetIdx !== -1) {
               result.splice(targetIdx + 1, 0, field)
             } else {
@@ -302,6 +363,7 @@ function applyToolCalls(
           } else {
             result.unshift(field)
           }
+
           summary.push(`"${parsed.field_label}" הוזז`)
         }
         break
@@ -324,6 +386,7 @@ export async function chatWithFormAI(input: {
   error?: string
 }> {
   const apiKey = process.env.OPENAI_API_KEY
+
   if (!apiKey) {
     return {
       fields: input.currentFields,
@@ -341,9 +404,17 @@ export async function chatWithFormAI(input: {
     { role: "system", content: systemContent },
     ...input.history.map((m) => {
       if (m.role === "tool") {
-        return { role: "tool" as const, content: m.content, tool_call_id: m.tool_call_id ?? "" }
+        return {
+          role: "tool" as const,
+          content: m.content,
+          tool_call_id: m.tool_call_id ?? "",
+        }
       }
-      return { role: m.role as "user" | "assistant", content: m.content }
+
+      return {
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }
     }),
     { role: "user", content: input.message },
   ]
@@ -352,17 +423,34 @@ export async function chatWithFormAI(input: {
     const client = new OpenAI({ apiKey })
 
     const completion = await client.chat.completions.parse({
-      model: "gpt-5.4",
+      model: EDITOR_MODEL,
       messages,
       tools: [
-        zodFunction({ name: "add_fields", parameters: AddFieldsParams, description: "Add new fields to the form" }),
-        zodFunction({ name: "update_field", parameters: UpdateFieldParams, description: "Update an existing field's properties" }),
-        zodFunction({ name: "remove_field", parameters: RemoveFieldParams, description: "Remove a field from the form" }),
-        zodFunction({ name: "reorder_field", parameters: ReorderFieldParams, description: "Move a field to a different position" }),
+        zodFunction({
+          name: "add_fields",
+          parameters: AddFieldsParams,
+          description: "Add new fields to the form",
+        }),
+        zodFunction({
+          name: "update_field",
+          parameters: UpdateFieldParams,
+          description: "Update an existing field's properties",
+        }),
+        zodFunction({
+          name: "remove_field",
+          parameters: RemoveFieldParams,
+          description: "Remove a field from the form",
+        }),
+        zodFunction({
+          name: "reorder_field",
+          parameters: ReorderFieldParams,
+          description: "Move a field to a different position",
+        }),
       ],
     })
 
     const choice = completion.choices[0]
+
     if (!choice) {
       return {
         fields: input.currentFields,
@@ -374,6 +462,7 @@ export async function chatWithFormAI(input: {
 
     const msg = choice.message
     const toolCalls = msg.tool_calls ?? []
+
     const newHistory: ChatMessage[] = [
       ...input.history,
       { role: "user", content: input.message },
@@ -382,6 +471,7 @@ export async function chatWithFormAI(input: {
     if (toolCalls.length === 0) {
       const text = msg.content ?? ""
       newHistory.push({ role: "assistant", content: text })
+
       return {
         fields: input.currentFields,
         aiMessage: text,
@@ -396,9 +486,14 @@ export async function chatWithFormAI(input: {
       id: tc.id,
     }))
 
-    const { fields: updatedFields, summary } = applyToolCalls(input.currentFields, parsedCalls)
+    const { fields: updatedFields, summary } = applyToolCalls(
+      input.currentFields,
+      parsedCalls
+    )
 
-    const assistantContent = msg.content ?? (summary.join(", ") || "השינויים בוצעו")
+    const assistantContent =
+      msg.content ?? (summary.join(", ") || "השינויים בוצעו")
+
     newHistory.push({ role: "assistant", content: assistantContent })
 
     return {
@@ -410,6 +505,7 @@ export async function chatWithFormAI(input: {
   } catch (err) {
     console.error("AI chat error:", err)
     const message = err instanceof Error ? err.message : "שגיאה לא צפויה"
+
     return {
       fields: input.currentFields,
       aiMessage: "",
@@ -432,18 +528,25 @@ export async function computeAIField(input: {
 
   let resolvedPrompt = input.promptTemplate
   for (const [label, value] of Object.entries(input.fieldValues)) {
-    resolvedPrompt = resolvedPrompt.replaceAll(`{{${label}}}`, value || "(לא מולא)")
+    resolvedPrompt = resolvedPrompt.replaceAll(
+      `{{${label}}}`,
+      value || "(לא מולא)"
+    )
   }
 
   try {
     const client = new OpenAI({ apiKey })
 
     const completion = await client.chat.completions.create({
-      model: (input.model && input.model !== "$undefined") ? input.model : "gpt-4.1-mini",
+      model:
+        input.model && input.model !== "$undefined"
+          ? input.model
+          : COMPUTE_MODEL,
       messages: [
         {
           role: "system",
-          content: "אתה עוזר חכם בתוך טופס דיגיטלי. ענה בקצרה ובצורה מעשית בעברית. הצג את התשובה בצורה מסודרת עם נקודות כשרלוונטי. אל תוסיף הסברים מיותרים.",
+          content:
+            "אתה עוזר חכם בתוך טופס דיגיטלי. ענה בקצרה ובצורה מעשית בעברית. הצג את התשובה בצורה מסודרת עם נקודות כשרלוונטי. אל תוסיף הסברים מיותרים.",
         },
         { role: "user", content: resolvedPrompt },
       ],
