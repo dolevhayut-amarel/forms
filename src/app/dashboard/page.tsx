@@ -5,6 +5,7 @@ import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FormCard } from "@/components/dashboard/form-card"
 import { EmptyState } from "@/components/dashboard/empty-state"
+import { AiFormBuilder } from "@/components/dashboard/ai-form-builder"
 import { AppHeader } from "@/components/layout/amarel-nav"
 import { createClient } from "@/lib/supabase/server"
 import { rowToForm } from "@/lib/types"
@@ -93,6 +94,10 @@ export default async function DashboardPage() {
             )}
           </div>
         )}
+
+        <div className="mt-8">
+          <AiFormBuilder />
+        </div>
       </main>
     </div>
   )
