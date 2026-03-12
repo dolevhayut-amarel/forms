@@ -20,6 +20,9 @@ import {
   ImageIcon,
   Link2,
   PenLine,
+  Circle,
+  MapPin,
+  Layers,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { isLayoutField, type FieldConfig } from "@/lib/types"
@@ -30,10 +33,12 @@ const TYPE_ICON: Record<FieldConfig["type"], React.ReactNode> = {
   number:       <Hash className="h-3.5 w-3.5" />,
   date:         <CalendarDays className="h-3.5 w-3.5" />,
   dropdown:     <ChevronDown className="h-3.5 w-3.5" />,
+  radio:        <Circle className="h-3.5 w-3.5" />,
   multiselect:  <ListChecks className="h-3.5 w-3.5" />,
   checkbox:     <CheckSquare className="h-3.5 w-3.5" />,
   star_rating:  <Star className="h-3.5 w-3.5" />,
   entry_exit:   <ArrowLeftRight className="h-3.5 w-3.5" />,
+  location:     <MapPin className="h-3.5 w-3.5" />,
   signature:    <PenLine className="h-3.5 w-3.5" />,
   heading:      <Heading1 className="h-3.5 w-3.5" />,
   subheading:   <Heading2 className="h-3.5 w-3.5" />,
@@ -41,6 +46,7 @@ const TYPE_ICON: Record<FieldConfig["type"], React.ReactNode> = {
   divider:      <Minus className="h-3.5 w-3.5" />,
   image:        <ImageIcon className="h-3.5 w-3.5" />,
   link:         <Link2 className="h-3.5 w-3.5" />,
+  section:      <Layers className="h-3.5 w-3.5" />,
 }
 
 const TYPE_LABEL: Record<FieldConfig["type"], string> = {
@@ -49,10 +55,12 @@ const TYPE_LABEL: Record<FieldConfig["type"], string> = {
   number:       "מספר",
   date:         "תאריך",
   dropdown:     "רשימה נפתחת",
+  radio:        "כפתורי רדיו",
   multiselect:  "בחירה מרובה",
   checkbox:     "צ'קבוקס",
   star_rating:  "דירוג כוכבים",
   entry_exit:   "כניסה / יציאה",
+  location:     "מיקום GPS",
   signature:    "חתימה",
   heading:      "כותרת ראשית",
   subheading:   "כותרת משנה",
@@ -60,6 +68,7 @@ const TYPE_LABEL: Record<FieldConfig["type"], string> = {
   divider:      "קו הפרדה",
   image:        "תמונה",
   link:         "לינק",
+  section:      "סקשן",
 }
 
 interface FieldItemProps {

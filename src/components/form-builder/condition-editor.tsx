@@ -56,9 +56,9 @@ function RuleValueInput({
   if (!meta.hasValueInput) return null
   if (!sourceField) return null
 
-  // Dropdown / multiselect → select from options
+  // Dropdown / radio / multiselect → select from options
   if (
-    (sourceField.type === "dropdown" || sourceField.type === "multiselect") &&
+    (sourceField.type === "dropdown" || sourceField.type === "radio" || sourceField.type === "multiselect") &&
     (sourceField.options ?? []).length > 0
   ) {
     return (

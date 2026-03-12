@@ -6,15 +6,17 @@ export type InputFieldType =
   | "long_answer"
   | "dropdown"
   | "multiselect"
+  | "radio"
   | "checkbox"
   | "number"
   | "date"
   | "star_rating"
   | "entry_exit"
+  | "location"
   | "signature"
 
 /** Layout/visual fields — display only, no answer collected */
-export type LayoutFieldType = "heading" | "subheading" | "paragraph" | "divider" | "image" | "link"
+export type LayoutFieldType = "heading" | "subheading" | "paragraph" | "divider" | "image" | "link" | "section"
 
 export type FieldType = InputFieldType | LayoutFieldType
 
@@ -25,6 +27,7 @@ export const LAYOUT_FIELD_TYPES: LayoutFieldType[] = [
   "divider",
   "image",
   "link",
+  "section",
 ]
 
 export function isLayoutField(type: FieldType): type is LayoutFieldType {
@@ -84,14 +87,15 @@ export interface FieldConfig {
    *  Image field: the image URL (src). */
   placeholder?: string
   required: boolean               // only meaningful for input fields
-  options?: string[]              // dropdown & multiselect only
-  allow_other?: boolean           // dropdown only — adds "Other + please specify"
+  options?: string[]              // dropdown, multiselect & radio
+  allow_other?: boolean           // dropdown, multiselect & radio — adds "Other + please specify"
   default_value?: string | string[] | boolean  // pre-filled value shown to the user
   min?: number                    // number field: minimum value
   max?: number                    // number field: maximum value
   step?: number                   // number field: step increment
   content?: string                // paragraph body text; image URL alternative
   validation?: FieldValidation    // text field validation rule
+  date_mode?: "date" | "datetime" // date field: date-only or datetime
   conditions?: FieldCondition     // visibility rules — shown when conditions met
   attendance_role?: "id_number" | "name" | "division" | "direction"
   show_to_approver?: boolean      // approval forms: visible in approver page (default: true)

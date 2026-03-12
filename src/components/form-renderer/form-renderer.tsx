@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button"
 import { TextField } from "./fields/text-field"
 import { LongAnswerField } from "./fields/long-answer-field"
 import { DropdownField } from "./fields/dropdown-field"
+import { RadioField } from "./fields/radio-field"
 import { MultiSelectField } from "./fields/multiselect-field"
 import { CheckboxField } from "./fields/checkbox-field"
 import { NumberField } from "./fields/number-field"
 import { DateField } from "./fields/date-field"
 import { StarRatingField } from "./fields/star-rating-field"
 import { EntryExitField } from "./fields/entry-exit-field"
+import { LocationField } from "./fields/location-field"
 import {
   HeadingElement,
   SubheadingElement,
@@ -20,13 +22,14 @@ import {
   DividerElement,
   ImageElement,
   LinkElement,
+  SectionElement,
 } from "./fields/layout-elements"
 import { SignatureField } from "./fields/signature-field"
 import { RememberDialog, MEMORY_KEY, isSaveableField, type FormMemory } from "./remember-dialog"
 import { submitResponse } from "@/lib/actions/responses"
 import { isLayoutField, type FieldConfig, type Form } from "@/lib/types"
 import { validateTextValue } from "@/lib/field-validation"
-import { isFieldVisible } from "@/lib/conditions"
+import { isFieldVisibleWithSections } from "@/lib/conditions"
 
 interface FormRendererProps {
   form: Form
@@ -65,7 +68,16 @@ export function FormRenderer({ form }: FormRendererProps) {
     const initial: FormValues = {}
     inputFields.forEach((f) => {
       if (f.default_value !== undefined) {
-        if (f.type === "multiselect") {
+        if (f.type === "date" && f.default_value === "__now__") {
+          const now = new Date()
+          const offset = now.getTimezoneOffset() * 60000
+          const local = new Date(now.getTime() - offset)
+          if ((f.date_mode ?? "date") === "datetime") {
+            initial[f.id] = local.toISOString().slice(0, 16)
+          } else {
+            initial[f.id] = local.toISOString().slice(0, 10)
+          }
+        } else if (f.type === "multiselect") {
           initial[f.id] = Array.isArray(f.default_value)
             ? (f.default_value as string[])
             : []
@@ -100,12 +112,12 @@ export function FormRenderer({ form }: FormRendererProps) {
   // Track whether memory is active so we can show the indicator reactively
   const [memoryActive, setMemoryActive] = useState(() => hasActiveMemory(form.id))
 
-  // Reactive visibility — recomputed whenever any value changes
+  // Reactive visibility — recomputed whenever any value changes (section-aware)
   const visibleFieldIds = useMemo(
     () =>
       new Set(
         form.fields
-          .filter((f) => isFieldVisible(f, values))
+          .filter((f) => isFieldVisibleWithSections(f, form.fields, values))
           .map((f) => f.id)
       ),
     [form.fields, values]
@@ -263,8 +275,11 @@ export function FormRenderer({ form }: FormRendererProps) {
       <form onSubmit={handleSubmit} noValidate>
         <div className="space-y-6 mb-8">
           {form.fields
-            // Layout fields are always shown; input fields respect conditions
-            .filter((f) => isLayoutField(f.type) || visibleFieldIds.has(f.id))
+            .filter((f) => {
+              if (f.type === "section") return visibleFieldIds.has(f.id)
+              if (isLayoutField(f.type)) return true
+              return visibleFieldIds.has(f.id)
+            })
             .map((field) => (
               <div key={field.id} id={`field-${field.id}`}>
                 <FieldRenderer
@@ -362,6 +377,7 @@ function FieldRenderer({
   if (field.type === "divider")    return <DividerElement field={field} />
   if (field.type === "image")      return <ImageElement field={field} />
   if (field.type === "link")       return <LinkElement field={field} />
+  if (field.type === "section")    return <SectionElement field={field} />
 
   // Input fields
   if (field.type === "text") {
@@ -379,6 +395,9 @@ function FieldRenderer({
   if (field.type === "dropdown") {
     return <DropdownField field={field} value={value as string} onChange={(v) => onChange(v)} error={error} />
   }
+  if (field.type === "radio") {
+    return <RadioField field={field} value={value as string} onChange={(v) => onChange(v)} error={error} />
+  }
   if (field.type === "multiselect") {
     return <MultiSelectField field={field} value={value as string[]} onChange={(v) => onChange(v)} error={error} />
   }
@@ -390,6 +409,9 @@ function FieldRenderer({
   }
   if (field.type === "entry_exit") {
     return <EntryExitField field={field} value={value as string} onChange={(v) => onChange(v)} error={error} />
+  }
+  if (field.type === "location") {
+    return <LocationField field={field} value={value as string} onChange={(v) => onChange(v)} error={error} />
   }
   if (field.type === "signature") {
     return <SignatureField field={field} value={value as string} onChange={(v) => onChange(v)} error={error} />

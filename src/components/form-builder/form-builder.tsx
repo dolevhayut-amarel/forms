@@ -158,7 +158,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
   function addField(type: FieldType) {
     const layout = isLayoutField(type)
     const noPlaceholderTypes = new Set([
-      "entry_exit", "dropdown", "multiselect", "checkbox", "star_rating", "date",
+      "entry_exit", "dropdown", "multiselect", "radio", "checkbox", "star_rating", "date", "location",
     ])
     const newField: FieldConfig = {
       id: nanoid(),
@@ -168,7 +168,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
       // Placeholder for text-like fields only
       ...(!layout && !noPlaceholderTypes.has(type) ? { placeholder: "" } : {}),
       // Options for select fields
-      ...(type === "dropdown" || type === "multiselect" ? { options: [] } : {}),
+      ...(type === "dropdown" || type === "multiselect" || type === "radio" ? { options: [] } : {}),
     }
     setFields((prev) => [...prev, newField])
     selectField(newField.id)
@@ -216,6 +216,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
     if (!field) return []
     if (field.type === "entry_exit") return ["כניסה", "יציאה"]
     if (field.type === "checkbox") return ["true"]
+    if (field.type === "radio") return field.options ?? []
     return field.options ?? []
   }, [inputFields])
 

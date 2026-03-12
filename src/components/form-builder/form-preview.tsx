@@ -14,6 +14,9 @@ import {
   Link2,
   ExternalLink,
   PenLine,
+  Circle,
+  MapPin,
+  Layers,
 } from "lucide-react"
 import { isLayoutField, type FieldConfig } from "@/lib/types"
 
@@ -197,6 +200,22 @@ function PreviewField({ field }: { field: FieldConfig }) {
     )
   }
 
+  if (field.type === "section") {
+    return (
+      <div className="rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/50 px-4 py-3 flex items-center gap-2">
+        <Layers className="h-4 w-4 text-violet-500 shrink-0" />
+        <span className="text-sm font-semibold text-violet-700">
+          {field.label || <span className="text-violet-300">סקשן ללא שם</span>}
+        </span>
+        {field.conditions && field.conditions.rules.length > 0 && (
+          <span className="text-[10px] bg-blue-100 text-blue-600 rounded-md px-1.5 py-0.5 font-medium ms-auto">
+            מותנה
+          </span>
+        )}
+      </div>
+    )
+  }
+
   // Input fields
   return (
     <div className="space-y-1.5 p-1">
@@ -223,8 +242,10 @@ function FieldTypeIcon({ type }: { type: FieldConfig["type"] }) {
   const cls = "h-3.5 w-3.5 text-neutral-400 shrink-0"
   if (type === "text") return <Type className={cls} />
   if (type === "dropdown") return <ChevronDown className={cls} />
+  if (type === "radio") return <Circle className={cls} />
   if (type === "multiselect") return <ListChecks className={cls} />
   if (type === "entry_exit") return <LogIn className={cls} />
+  if (type === "location") return <MapPin className={cls} />
   if (type === "signature") return <PenLine className={cls} />
   if (type === "heading") return <Heading1 className={cls} />
   if (type === "subheading") return <Heading2 className={cls} />
@@ -311,6 +332,49 @@ function FieldMock({ field }: { field: FieldConfig }) {
         <div className="rounded-xl border-2 border-red-200 bg-red-50 py-4 flex flex-col items-center gap-1.5">
           <LogOut className="h-5 w-5 text-red-400" strokeWidth={2} />
           <span className="text-sm font-bold text-red-600">יציאה</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (field.type === "radio") {
+    const opts = (field.options ?? []).slice(0, 3)
+    if (opts.length === 0) {
+      return (
+        <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+          <span className="text-xs text-neutral-300">הוסף אפשרויות…</span>
+        </div>
+      )
+    }
+    return (
+      <div className="space-y-1.5">
+        {opts.map((opt) => (
+          <div
+            key={opt}
+            className="h-9 rounded-lg border border-neutral-200 bg-neutral-50 px-3 flex items-center gap-2.5"
+          >
+            <div className="w-4 h-4 rounded-full border-2 border-neutral-300 shrink-0" />
+            <span className="text-sm text-neutral-600">{opt}</span>
+          </div>
+        ))}
+        {(field.options ?? []).length > 3 && (
+          <p className="text-xs text-neutral-400 ps-1">
+            +{(field.options ?? []).length - 3} אפשרויות נוספות
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  if (field.type === "location") {
+    return (
+      <div className="flex gap-2 items-center">
+        <div className="flex-1 h-10 rounded-lg border border-neutral-200 bg-neutral-50 px-3 flex items-center">
+          <span className="text-sm text-neutral-300">קואורדינטות…</span>
+        </div>
+        <div className="h-10 px-3 rounded-lg bg-blue-100 border border-blue-200 flex items-center gap-1.5">
+          <MapPin className="h-3.5 w-3.5 text-blue-600" />
+          <span className="text-xs text-blue-600 font-medium">מיקום</span>
         </div>
       </div>
     )

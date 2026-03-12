@@ -5,12 +5,14 @@ import type { FieldConfig } from "@/lib/types"
 
 interface DateFieldProps {
   field: FieldConfig
-  value: string          // ISO date string "YYYY-MM-DD"
+  value: string
   onChange: (value: string) => void
   error?: string
 }
 
 export function DateField({ field, value, onChange, error }: DateFieldProps) {
+  const isDatetime = (field.date_mode ?? "date") === "datetime"
+
   return (
     <div className="space-y-2">
       <Label className="text-base font-medium text-neutral-800 leading-snug">
@@ -21,7 +23,7 @@ export function DateField({ field, value, onChange, error }: DateFieldProps) {
       </Label>
 
       <input
-        type="date"
+        type={isDatetime ? "datetime-local" : "date"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={`

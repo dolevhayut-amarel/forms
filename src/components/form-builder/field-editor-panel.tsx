@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react"
 import {
   Plus, X, ImageIcon, LogIn, LogOut, Link2, PenLine,
-  Upload, Loader2, Star,
+  Upload, Loader2, Star, MapPin, Clock,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -35,10 +35,12 @@ const TYPE_LABEL: Record<FieldConfig["type"], string> = {
   number: "מספר",
   date: "תאריך",
   dropdown: "רשימה נפתחת",
+  radio: "כפתורי רדיו",
   multiselect: "בחירה מרובה",
   checkbox: "צ'קבוקס",
   star_rating: "דירוג כוכבים",
   entry_exit: "כניסה / יציאה",
+  location: "מיקום GPS",
   signature: "חתימה",
   heading: "כותרת ראשית",
   subheading: "כותרת משנה",
@@ -46,6 +48,7 @@ const TYPE_LABEL: Record<FieldConfig["type"], string> = {
   divider: "קו הפרדה",
   image: "תמונה",
   link: "לינק",
+  section: "סקשן",
 }
 
 interface FieldEditorPanelProps {
@@ -118,12 +121,12 @@ export function FieldEditorPanel({ field, onChange, allFields }: FieldEditorPane
     update({ default_value: next.length > 0 ? next : undefined })
   }
 
-  const hasOptions = field.type === "dropdown" || field.type === "multiselect"
+  const hasOptions = field.type === "dropdown" || field.type === "multiselect" || field.type === "radio"
 
   // ── Sections that have a default-value control ────────────────────────────
   const hasDefaultValue =
     !layout &&
-    !["entry_exit", "signature", "star_rating"].includes(field.type)
+    !["entry_exit", "signature", "star_rating", "location"].includes(field.type)
 
   return (
     <div className="flex flex-col gap-5">
@@ -416,7 +419,73 @@ export function FieldEditorPanel({ field, onChange, allFields }: FieldEditorPane
         </>
       )}
 
-      {!layout && field.type !== "entry_exit" && (
+      {field.type === "location" && (
+        <>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+              תווית
+            </Label>
+            <Input
+              value={field.label}
+              onChange={(e) => update({ label: e.target.value })}
+              placeholder="לדוגמה: מיקום"
+              className="h-9 rounded-xl text-sm"
+            />
+          </div>
+          <div className="bg-blue-50 rounded-xl border border-blue-200 p-4 flex flex-col items-center gap-2 text-blue-600">
+            <MapPin className="h-6 w-6" />
+            <span className="text-xs font-medium">שדה מיקום GPS — המשיב ילחץ לקבלת קואורדינטות</span>
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-neutral-700">שדה חובה</p>
+              <p className="text-xs text-neutral-400">המשיבים חייבים לשתף מיקום</p>
+            </div>
+            <Checkbox
+              checked={field.required}
+              onCheckedChange={(checked) => update({ required: checked === true })}
+              className="rounded-md"
+            />
+          </div>
+          <Separator />
+          <ConditionEditor
+            field={field}
+            allFields={allFields}
+            onChange={(conditions) => update({ conditions })}
+          />
+        </>
+      )}
+
+      {field.type === "section" && (
+        <>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+              כותרת הסקשן
+            </Label>
+            <Input
+              value={field.label}
+              onChange={(e) => update({ label: e.target.value })}
+              placeholder="לדוגמה: פרטי כניסה"
+              className="h-9 rounded-xl text-sm"
+            />
+          </div>
+          <div className="bg-violet-50 rounded-xl border border-violet-200 p-3">
+            <p className="text-xs text-violet-600">
+              כל השדות שמתחת לסקשן זה (עד הסקשן הבא) יוצגו בתוכו.
+              הוסף תנאי הצגה כדי להציג/להסתיר את כל הקבוצה בבת אחת.
+            </p>
+          </div>
+          <Separator />
+          <ConditionEditor
+            field={field}
+            allFields={allFields}
+            onChange={(conditions) => update({ conditions })}
+          />
+        </>
+      )}
+
+      {!layout && field.type !== "entry_exit" && field.type !== "location" && (
         <>
           {/* Label */}
           <div className="space-y-1.5">
@@ -645,8 +714,8 @@ export function FieldEditorPanel({ field, onChange, allFields }: FieldEditorPane
                 <p className="text-xs text-neutral-400">לחץ Enter או + להוספת אפשרויות</p>
               )}
 
-              {/* Allow other — dropdown only */}
-              {field.type === "dropdown" && (
+              {/* Allow other — dropdown, radio & multiselect */}
+              {(field.type === "dropdown" || field.type === "radio" || field.type === "multiselect") && (
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100">
                   <div>
                     <p className="text-sm font-medium text-neutral-700">אפשרות &quot;אחר&quot;</p>
@@ -700,19 +769,63 @@ export function FieldEditorPanel({ field, onChange, allFields }: FieldEditorPane
 
               {/* date */}
               {field.type === "date" && (
-                <input
-                  type="date"
-                  value={(field.default_value as string) ?? ""}
-                  onChange={(e) =>
-                    update({ default_value: e.target.value || undefined })
-                  }
-                  className="w-full h-9 rounded-xl border border-input px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1"
-                  dir="ltr"
-                />
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    {(["date", "datetime"] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => update({ date_mode: mode === "date" ? undefined : mode, default_value: undefined })}
+                        className={`flex-1 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                          (field.date_mode ?? "date") === mode
+                            ? "bg-neutral-800 border-neutral-800 text-white"
+                            : "border-neutral-200 text-neutral-500 hover:bg-neutral-50"
+                        }`}
+                      >
+                        {mode === "date" ? "תאריך" : "תאריך + שעה"}
+                      </button>
+                    ))}
+                  </div>
+                  {field.default_value === "__now__" ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-9 rounded-xl border border-blue-300 bg-blue-50 px-3 flex items-center gap-2">
+                        <Clock className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                        <span className="text-xs text-blue-600 font-medium">עכשיו (דינמי)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => update({ default_value: undefined })}
+                        className="text-neutral-400 hover:text-red-500"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type={(field.date_mode ?? "date") === "datetime" ? "datetime-local" : "date"}
+                        value={(field.default_value as string) ?? ""}
+                        onChange={(e) =>
+                          update({ default_value: e.target.value || undefined })
+                        }
+                        className="flex-1 h-9 rounded-xl border border-input px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1"
+                        dir="ltr"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => update({ default_value: "__now__" })}
+                        className="h-9 px-3 rounded-xl border border-blue-200 bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors whitespace-nowrap flex items-center gap-1.5"
+                      >
+                        <Clock className="h-3 w-3" />
+                        עכשיו
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
 
-              {/* dropdown — only show when options exist */}
-              {field.type === "dropdown" && (field.options ?? []).length > 0 && (
+              {/* dropdown / radio — only show when options exist */}
+              {(field.type === "dropdown" || field.type === "radio") && (field.options ?? []).length > 0 && (
                 <Select
                   value={(field.default_value as string) ?? "__none__"}
                   onValueChange={(v) =>

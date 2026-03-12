@@ -1,6 +1,6 @@
 "use client"
 
-import { ExternalLink } from "lucide-react"
+import { ExternalLink, Layers } from "lucide-react"
 import type { FieldConfig } from "@/lib/types"
 
 interface LayoutElementProps {
@@ -107,6 +107,17 @@ export function ImageElement({ field }: LayoutElementProps) {
       {field.label && (
         <p className="text-xs text-neutral-400 text-center py-2 px-4">{field.label}</p>
       )}
+    </div>
+  )
+}
+
+export function SectionElement({ field }: LayoutElementProps) {
+  if (!field.label) return null
+  return (
+    <div className="flex items-center gap-3 pt-4 pb-1">
+      <Layers className="h-4 w-4 text-violet-500 shrink-0" />
+      <h3 className="text-base font-bold text-neutral-800">{field.label}</h3>
+      <div className="flex-1 h-px bg-neutral-200" />
     </div>
   )
 }

@@ -25,7 +25,7 @@ export interface FormMemory {
 // Field types that are meaningful to remember
 const SAVEABLE_TYPES = new Set([
   "text", "long_answer", "number", "date",
-  "dropdown", "multiselect", "checkbox", "star_rating",
+  "dropdown", "radio", "multiselect", "checkbox", "star_rating",
 ])
 
 export function isSaveableField(f: FieldConfig) {

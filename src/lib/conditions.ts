@@ -33,12 +33,14 @@ export const OPERATORS_BY_TYPE: Partial<Record<InputFieldType, ConditionOperator
   text:         ["equals", "not_equals", "contains", "not_contains", "is_empty", "is_not_empty"],
   long_answer:  ["equals", "not_equals", "contains", "not_contains", "is_empty", "is_not_empty"],
   dropdown:     ["equals", "not_equals", "is_empty", "is_not_empty"],
+  radio:        ["equals", "not_equals", "is_empty", "is_not_empty"],
   multiselect:  ["contains", "not_contains", "is_empty", "is_not_empty"],
   checkbox:     ["equals", "not_equals"],
   number:       ["equals", "not_equals", "greater_than", "less_than", "is_empty", "is_not_empty"],
   star_rating:  ["equals", "not_equals", "greater_than", "less_than", "is_empty", "is_not_empty"],
   date:         ["equals", "greater_than", "less_than", "is_empty", "is_not_empty"],
   entry_exit:   ["equals", "not_equals", "is_empty", "is_not_empty"],
+  location:     ["is_empty", "is_not_empty"],
   signature:    ["is_empty", "is_not_empty"],
 }
 
@@ -108,6 +110,29 @@ function evaluateRule(rule: ConditionRule, values: FormValues): boolean {
 // ─── Builder helpers ──────────────────────────────────────────────────────────
 
 /**
+ * Section-aware visibility: a field is hidden if its parent section's
+ * conditions evaluate to false, OR if its own conditions evaluate to false.
+ */
+export function isFieldVisibleWithSections(
+  field: FieldConfig,
+  allFields: FieldConfig[],
+  values: FormValues
+): boolean {
+  const idx = allFields.indexOf(field)
+  if (idx === -1) return isFieldVisible(field, values)
+
+  // Walk backwards to find the closest preceding section
+  for (let i = idx - 1; i >= 0; i--) {
+    if (allFields[i].type === "section") {
+      if (!isFieldVisible(allFields[i], values)) return false
+      break
+    }
+  }
+
+  return isFieldVisible(field, values)
+}
+
+/**
  * Returns the input fields that can be used as condition sources
  * for a given target field (excludes layout fields and the field itself).
  */
@@ -123,7 +148,8 @@ export function getConditionSources(
       f.type !== "paragraph" &&
       f.type !== "divider" &&
       f.type !== "image" &&
-      f.type !== "link"
+      f.type !== "link" &&
+      f.type !== "section"
   )
 }
 

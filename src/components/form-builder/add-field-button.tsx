@@ -17,6 +17,9 @@ import {
   ImageIcon,
   Link2,
   PenLine,
+  Circle,
+  MapPin,
+  Layers,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -66,6 +69,12 @@ const INPUT_FIELD_TYPES: {
     description: "בחירת אפשרות אחת",
   },
   {
+    type: "radio",
+    label: "כפתורי רדיו",
+    icon: <Circle className="h-4 w-4" />,
+    description: "בחירת אפשרות אחת עם כפתורים",
+  },
+  {
     type: "multiselect",
     label: "בחירה מרובה",
     icon: <ListChecks className="h-4 w-4" />,
@@ -88,6 +97,12 @@ const INPUT_FIELD_TYPES: {
     label: "חתימה",
     icon: <PenLine className="h-4 w-4" />,
     description: "חתימה בכתב יד",
+  },
+  {
+    type: "location",
+    label: "מיקום GPS",
+    icon: <MapPin className="h-4 w-4" />,
+    description: "קואורדינטות מיקום",
   },
   {
     type: "entry_exit",
@@ -138,6 +153,12 @@ const LAYOUT_FIELD_TYPES: {
     label: "תמונה",
     icon: <ImageIcon className="h-4 w-4" />,
     description: "תמונה לפי כתובת URL",
+  },
+  {
+    type: "section",
+    label: "סקשן",
+    icon: <Layers className="h-4 w-4" />,
+    description: "קיבוץ שדות עם תנאי הצגה",
   },
 ]
 
