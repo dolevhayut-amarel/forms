@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מערכת סבב אישורים — תיעוד טכני</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-alt: #f4f5f7;
+    --bg-code: #f1f3f5;
+    --text: #172b4d;
+    --text-muted: #6b778c;
+    --text-subtle: #97a0af;
+    --border: #dfe1e6;
+    --primary: #0052cc;
+    --primary-light: #deebff;
+    --success: #00875a;
+    --success-light: #e3fcef;
+    --warning: #ff991f;
+    --warning-light: #fffae6;
+    --danger: #de350b;
+    --danger-light: #ffebe6;
+    --purple: #6554c0;
+    --purple-light: #eae6ff;
+    --teal: #00b8d9;
+    --teal-light: #e6fcff;
+    --sidebar-w: 260px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans Hebrew', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.7;
+    font-size: 14px;
+  }
+
+  /* Top bar */
+  .topbar {
+    position: fixed; top: 0; right: 0; left: 0; z-index: 100;
+    height: 56px;
+    background: #1e3a5f;
+    display: flex; align-items: center; padding: 0 24px; gap: 16px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .topbar-logo {
+    font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -0.5px;
+  }
+  .topbar-logo span { color: #4c9aff; }
+  .topbar-breadcrumb { color: rgba(255,255,255,.5); font-size: 13px; }
+  .topbar-breadcrumb a { color: rgba(255,255,255,.7); text-decoration: none; }
+  .topbar-breadcrumb a:hover { color: #fff; }
+
+  /* Sidebar */
+  .sidebar {
+    position: fixed; top: 56px; right: 0; bottom: 0; width: var(--sidebar-w);
+    background: var(--bg-alt); border-left: 1px solid var(--border);
+    overflow-y: auto; padding: 20px 0;
+  }
+  .sidebar-section { padding: 0 16px; margin-bottom: 20px; }
+  .sidebar-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted); margin-bottom: 8px; padding: 0 8px;
+  }
+  .sidebar a {
+    display: block; padding: 6px 8px; border-radius: 4px; color: var(--text);
+    text-decoration: none; font-size: 13px; transition: background .15s;
+  }
+  .sidebar a:hover { background: var(--border); }
+  .sidebar a.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+
+  /* Main content */
+  .main {
+    margin-top: 56px; margin-right: var(--sidebar-w);
+    max-width: 820px; padding: 40px 48px 80px;
+  }
+  .main h1 {
+    font-size: 28px; font-weight: 700; margin-bottom: 8px;
+    border-bottom: none; color: var(--text);
+  }
+  .main .page-meta {
+    font-size: 12px; color: var(--text-subtle); margin-bottom: 32px;
+    display: flex; gap: 16px; align-items: center;
+  }
+  .main .page-meta .label {
+    display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+    border-radius: 3px; font-weight: 600; font-size: 11px; text-transform: uppercase;
+  }
+  .label-approved { background: var(--success-light); color: var(--success); }
+  .label-draft { background: var(--warning-light); color: var(--warning); }
+
+  .main h2 {
+    font-size: 20px; font-weight: 700; margin: 40px 0 16px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .main h3 { font-size: 16px; font-weight: 600; margin: 28px 0 12px; }
+  .main p { margin-bottom: 12px; }
+  .main ul, .main ol { margin-bottom: 12px; padding-right: 24px; }
+  .main li { margin-bottom: 6px; }
+  .main strong { font-weight: 600; }
+
+  /* Info panel */
+  .info-panel {
+    border-radius: 4px; padding: 16px 20px; margin: 20px 0;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .info-panel .icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .info-panel.note { background: var(--primary-light); border-right: 3px solid var(--primary); }
+  .info-panel.warning { background: var(--warning-light); border-right: 3px solid var(--warning); }
+  .info-panel.success { background: var(--success-light); border-right: 3px solid var(--success); }
+  .info-panel.danger { background: var(--danger-light); border-right: 3px solid var(--danger); }
+
+  /* Code */
+  code {
+    background: var(--bg-code); padding: 2px 6px; border-radius: 3px;
+    font-family: 'SFMono-Regular', Menlo, monospace; font-size: 12px; color: var(--danger);
+  }
+  pre {
+    background: #263238; color: #eeffff; border-radius: 6px;
+    padding: 16px 20px; margin: 16px 0; overflow-x: auto;
+    font-family: 'SFMono-Regular', Menlo, monospace; font-size: 12px;
+    line-height: 1.6; direction: ltr; text-align: left;
+  }
+
+  /* Table */
+  table {
+    width: 100%; border-collapse: collapse; margin: 16px 0;
+    font-size: 13px;
+  }
+  th {
+    background: var(--bg-alt); font-weight: 600; text-align: right;
+    padding: 10px 12px; border: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 12px; border: 1px solid var(--border); vertical-align: top;
+  }
+  tr:hover td { background: #fafbfc; }
+
+  /* Status badge */
+  .status {
+    display: inline-block; padding: 2px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 600;
+  }
+  .status-waiting { background: #f4f5f7; color: #6b778c; }
+  .status-pending { background: #fff0b3; color: #974f0c; }
+  .status-approved { background: #abf5d1; color: #006644; }
+  .status-rejected { background: #ffbdad; color: #bf2600; }
+  .status-expired { background: #dfe1e6; color: #505f79; }
+
+  /* Flow diagram */
+  .flow-diagram {
+    background: var(--bg-alt); border: 1px solid var(--border);
+    border-radius: 8px; padding: 24px; margin: 20px 0; direction: ltr; text-align: center;
+  }
+  .flow-row { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .flow-box {
+    padding: 10px 18px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    border: 2px solid; min-width: 110px; text-align: center;
+  }
+  .flow-box.submit { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+  .flow-box.init { background: var(--purple-light); border-color: var(--purple); color: var(--purple); }
+  .flow-box.token { background: var(--teal-light); border-color: var(--teal); color: #006c8a; }
+  .flow-box.decide { background: var(--success-light); border-color: var(--success); color: var(--success); }
+  .flow-box.reject { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+  .flow-box.done { background: #e0e0e0; border-color: #888; color: #333; }
+  .flow-arrow { font-size: 20px; color: var(--text-muted); }
+
+  /* File tree */
+  .file-tree {
+    background: var(--bg-alt); border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px 20px; margin: 16px 0;
+    font-family: 'SFMono-Regular', Menlo, monospace; font-size: 12px;
+    line-height: 2; direction: ltr; text-align: left;
+  }
+  .file-tree .new { color: var(--success); font-weight: 600; }
+  .file-tree .modified { color: var(--warning); font-weight: 600; }
+  .file-tree .unchanged { color: var(--text-subtle); }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-right: 0; padding: 24px 20px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-logo">אמרל<span>דוקס</span></div>
+  <div class="topbar-breadcrumb">
+    <a href="#">מערכת טפסים</a> / <a href="#">תיעוד טכני</a> / מערכת סבב אישורים
+  </div>
+</div>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-title">ניווט מהיר</div>
+    <a href="#overview" class="active">סקירה כללית</a>
+    <a href="#architecture">ארכיטקטורה</a>
+    <a href="#data-model">מודל נתונים</a>
+    <a href="#approval-flow">זרימת אישור</a>
+    <a href="#dynamic-target">יעד מאשר דינאמי</a>
+    <a href="#field-visibility">נראות שדות למאשר</a>
+    <a href="#builder-ui">ממשק הגדרה (Builder)</a>
+    <a href="#approve-page">דף אישור ציבורי</a>
+    <a href="#approvals-dashboard">לוח אישורים ייעודי</a>
+    <a href="#results-view">תצוגת תוצאות</a>
+    <a href="#security">אבטחה</a>
+    <a href="#files">קבצים שהשתנו</a>
+    <a href="#statuses">סטטוסים</a>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main">
+
+  <h1 id="overview">מערכת סבב אישורים</h1>
+  <div class="page-meta">
+    <span class="label label-approved">LIVE</span>
+    <span>עודכן: מרץ 2026</span>
+    <span>גרסה: 1.0</span>
+  </div>
+
+  <p>
+    מערכת סבב אישורים מאפשרת ליצור טפסים ייעודיים מסוג <code>approval</code> שבהם כל תגובה עוברת
+    סבב אישורים סדרתי (1..N שלבים). גורמים מאשרים מקבלים קישור מאובטח חד-פעמי ויכולים לאשר או
+    לדחות את הבקשה ללא צורך בהתחברות למערכת.
+  </p>
+
+  <div class="info-panel note">
+    <span class="icon">ℹ️</span>
+    <div>
+      <strong>הפרדה מלאה:</strong> הפיצ'ר פועל רק על טפסים מסוג <code>approval</code>.
+      טפסים מסוג <code>general</code> ו-<code>attendance</code> לא מושפעים כלל.
+    </div>
+  </div>
+
+  <!-- ───────────────────────────────── -->
+  <h2 id="architecture">ארכיטקטורה</h2>
+
+  <div class="flow-diagram">
+    <div class="flow-row">
+      <div class="flow-box submit">משתמש ממלא טופס</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-box init">אתחול סבב אישורים</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-box token">הנפקת Token + קישור</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-box token">מאשר פותח קישור</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-box decide">אישור ✓</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-box token">שלב הבא (Token חדש)</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-box decide">שלב אחרון ✓</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-box done">סטטוס: אושר</div>
+    </div>
+    <div class="flow-row" style="margin-top:8px;">
+      <div class="flow-box reject">דחייה ✗ (בכל שלב)</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-box done">סטטוס: נדחה</div>
+    </div>
+  </div>
+
+  <h3>עקרונות מנחים</h3>
+  <ul>
+    <li>תאימות לאחור מלאה — טפסים קיימים לא מושפעים</li>
+    <li>DB additive בלבד — לא שונתה שום טבלה קיימת</li>
+    <li>אבטחת Token — hash + TTL + single-use</li>
+    <li>יעד מאשר דינאמי — קבוע, משדה, או ממיפוי לפי בחירה</li>
+    <li>שליטה על נראות שדות — בעל הטופס קובע מה המאשר רואה</li>
+  </ul>
+
+  <!-- ───────────────────────────────── -->
+  <h2 id="data-model">מודל נתונים</h2>
+
+  <h3>טבלאות חדשות</h3>
+  <table>
+    <tr><th style="width:35%">טבלה</th><th>תיאור</th></tr>
+    <tr><td><code>response_approvals</code></td><td>מופע אישור 1:1 עם response. מחזיק סטטוס כולל, שלב נוכחי, זמני התחלה/סיום.</td></tr>
+    <tr><td><code>response_approval_steps</code></td><td>שלב בודד בסבב. מכיל פרטי מאשר, token (hash), סטטוס, חתימה, הערה.</td></tr>
+    <tr><td><code>response_approval_events</code></td><td>Audit log — כל אירוע (אתחול, הנפקת token, החלטה) נרשם כאן.</td></tr>
+  </table>
+
+  <h3>RPCs (security definer)</h3>
+  <table>
+    <tr><th style="width:40%">פונקציה</th><th>תיאור</th></tr>
+    <tr>
+      <td><code>initialize_approval_for_response(p_response_id)</code></td>
+      <td>פותר יעדים דינאמיים מ-response.data, יוצר מופע + שלבים + token ראשון. רץ רק על טפסי <code>approval</code>.</td>
+    </tr>
+    <tr>
+      <td><code>get_approval_by_token(p_token)</code></td>
+      <td>מחזיר פרטי בקשה + שדות הטופס + הגדרות נראות — לדף האישור הציבורי.</td>
+    </tr>
+    <tr>
+      <td><code>decide_approval_by_token(p_token, p_decision, ...)</code></td>
+      <td>מבצע אישור/דחייה, מקדם לשלב הבא או סוגר את הסבב.</td>
+    </tr>
+  </table>
+
+  <div class="info-panel success">
+    <span class="icon">✅</span>
+    <div><strong>אפס שינוי</strong> בטבלאות <code>forms</code>, <code>responses</code>, <code>notifications</code>.</div>
+  </div>
+
+  <!-- ───────────────────────────────── -->
+  <h2 id="approval-flow">זרימת אישור</h2>
+
+  <ol>
+    <li>משתמש ממלא טופס מסוג <code>approval</code> ולוחץ "שלח לאישור".</li>
+    <li><code>submitResponse</code> שומר את התגובה ב-<code>responses</code> כרגיל.</li>
+    <li>מזהה <code>form_type === "approval"</code> → קורא ל-<code>initializeApprovalForResponse</code>.</li>
+    <li>ה-RPC פותר יעדי מאשרים (קבוע / משדה / ממיפוי), יוצר מופע + שלבים, מנפיק token לשלב הראשון.</li>
+    <li>Token מוחזר ל-backend → ניתן להעביר למאשר דרך email/whatsapp (adapter חיצוני).</li>
+    <li>מאשר פותח <code>/approve/{token}</code> → רואה פרטי בקשה (שדות מסוננים) → מאשר / דוחה.</li>
+    <li>אם אושר ויש עוד שלבים → token חדש לשלב הבא. אם אושר בשלב אחרון → סטטוס <code>approved</code>.</li>
+    <li>אם נדחה בכל שלב → סטטוס <code>rejected</code> ללא המשך.</li>
+  </ol>
+
+  <!-- ───────────────────────────────── -->
+  <h2 id="dynamic-target">יעד מאשר דינאמי</h2>
+
+  <p>לכל שלב אישור ניתן להגדיר מקור יעד:</p>
+
+  <table>
+    <tr><th>מצב</th><th>שם</th><th>תיאור</th><th>דוגמה</th></tr>
+    <tr>
+      <td><span class="status status-approved">fixed</span></td>
+      <td>יעד קבוע</td>
+      <td>אימייל/טלפון שמוזן ידנית</td>
+      <td><code>manager@company.com</code></td>
+    </tr>
+    <tr>
+      <td><span class="status status-pending">from_field</span></td>
+      <td>משדה בטופס</td>
+      <td>הערך שהמשתמש מילא בשדה מסוים (למשל שדה "אימייל מנהל")</td>
+      <td>שדה <code>manager_email</code> → ערך שהוזן</td>
+    </tr>
+    <tr>
+      <td><span class="status" style="background:var(--purple-light);color:var(--purple);">from_option_map</span></td>
+      <td>ממיפוי לפי בחירה</td>
+      <td>שדה dropdown → מיפוי ערך → יעד</td>
+      <td><code>יוסי → yossi@co.il</code><br><code>דוד → david@co.il</code></td>
+    </tr>
+  </table>
+
+  <div class="info-panel warning">
+    <span class="icon">⚠️</span>
+    <div>
+      <strong>ולידציה:</strong> אם ב-runtime הערך שנבחר לא נמצא במיפוי, ה-RPC מחזיר שגיאה
+      <code>missing_target_mapping</code> והתגובה נשמרת אך הסבב לא נוצר (עם warning למשתמש).
+    </div>
+  </div>
+
+  <!-- ───────────────────────────────── -->
+  <h2 id="field-visibility">נראות שדות למאשר</h2>
+
+  <p>בעל הטופס קובע אילו שדות המאשר רואה בדף האישור:</p>
+
+  <table>
+    <tr><th>מצב</th><th>תיאור</th></tr>
+    <tr>
+      <td><strong>הכל</strong> (<code>mode: "all"</code>)</td>
+      <td>כל שדות הקלט מוצגים למאשר — ברירת מחדל</td>
+    </tr>
+    <tr>
+      <td><strong>רק מסומנים</strong> (<code>mode: "selected"</code>)</td>
+      <td>רק שדות עם <code>show_to_approver: true</code> מוצגים. ה-Builder מציג checkbox ליד כל שדה.</td>
+    </tr>
+  </table>
+
+  <p>הסינון מתבצע בדף <code>/approve/[token]</code> לפי שילוב של <code>approval_field_visibility</code> ו-<code>show_to_approver</code> בכל שדה.</p>
+
+  <!-- ───────────────────────────────── -->
+  <h2 id="builder-ui">ממשק הגדרה (Builder)</h2>
+
+  <h3>תבנית מהירה</h3>
+  <p>כפתור "תבנית מהירה: סבב אישורים" מחליף את סוג הטופס ל-<code>approval</code>, מגדיר שלב אישור ראשון ריק, ומעדכן את כפתור השליחה ל-"שלח לאישור".</p>
+
+  <h3>פאנל הגדרות אישורים</h3>
+  <p>מוצג בפאנל ההגדרות <strong>רק</strong> כאשר <code>formType === "approval"</code>:</p>
+  <ul>
+    <li><strong>שלבי אישור (1..N)</strong> — כל שלב כולל: שם מאשר, ערוץ, מקור יעד, מיפוי</li>
+    <li><strong>נראות שדות</strong> — בחירה בין "הכל" ל"רק מסומנים" + checkboxes לשדות</li>
+    <li><strong>Badge</strong> — "סבב אישורים" ירוק ב-header</li>
+  </ul>
+
+  <!-- ───────────────────────────────── -->
+  <h2 id="approve-page">דף אישור ציבורי</h2>
+
+  <p>נתיב: <code>/approve/[token]</code></p>
+
+  <h3>מה המאשר רואה</h3>
+  <ul>
+    <li>שם הטופס + מספר שלב (X מתוך N)</li>
+    <li>פרטי מאשר (שם, ערוץ, יעד)</li>
+    <li>פרטי הבקשה — רק שדות מותרים, עם Labels מהטופס (לא field IDs)</li>
+    <li>כפתורי "אשר" / "דחה"</li>
+    <li>Textarea להערה + חתימה טקסטואלית (אופציונלי)</li>
+  </ul>
+
+  <h3>מצבים אפשריים</h3>
+  <table>
+    <tr><th>מצב</th><th>תצוגה</th></tr>
+    <tr><td>Token תקין</td><td>דף אישור מלא עם כפתורי פעולה</td></tr>
+    <tr><td>Token פג / נוצל</td><td>"הקישור אינו תקין — נראה שפג תוקף או כבר נוצל"</td></tr>
+    <tr><td>אחרי אישור</td><td>הודעה ירוקה: "הבקשה אושרה בהצלחה"</td></tr>
+    <tr><td>אחרי דחייה</td><td>הודעה אדומה: "הבקשה נדחתה"</td></tr>
+  </table>
+
+  <!-- ───────────────────────────────── -->
+  <h2 id="approvals-dashboard">לוח אישורים ייעודי</h2>
+
+  <p>נתיב: <code>/forms/[id]/approvals</code> — זמין רק לטפסים מסוג <code>approval</code>.</p>
+
+  <p>עמוד ייעודי (בדומה ללוח נוכחות עבור טפסי attendance) שמציג את כל הבקשות ומצב האישורים שלהן בזמן אמת.</p>
+
+  <h3>מה כולל העמוד</h3>
+  <ul>
+    <li><strong>כרטיסי סיכום:</strong> סה"כ בקשות, בתהליך, אושרו, נדחו</li>
+    <li><strong>טאבים לסינון:</strong> הכל / בתהליך / אושרו / נדחו</li>
+    <li><strong>כרטיס לכל בקשה (מתקפל):</strong>
+      <ul>
+        <li>סטטוס כללי עם אייקון צבעוני</li>
+        <li>שלב נוכחי (X/N)</li>
+        <li>תקציר שדות מובילים מהטופס</li>
+        <li>שם הגורם המאשר שממתין כרגע (כש-status = in_progress)</li>
+      </ul>
+    </li>
+    <li><strong>פירוט מורחב (בלחיצה):</strong>
+      <ul>
+        <li>ציר זמן ויזואלי של שלבי האישור (timeline)</li>
+        <li>לכל שלב: שם מאשר, ערוץ+יעד, סטטוס, זמן פעולה, הערה</li>
+        <li>פרטי הבקשה המלאים בגריד</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3>ניווט לעמוד</h3>
+  <table>
+    <tr><th>מיקום</th><th>אלמנט</th></tr>
+    <tr><td>Builder header</td><td>כפתור "אישורים" (כש-formType === "approval")</td></tr>
+    <tr><td>Dashboard FormCard</td><td>תפריט → "לוח אישורים"</td></tr>
+    <tr><td>Results breadcrumb</td><td>כפתור "אישורים" (כש-form_type === "approval")</td></tr>
+  </table>
+
+  <div class="info-panel note">
+    <span class="icon">ℹ️</span>
+    <div>
+      העמוד פועל בדיוק כמו לוח הנוכחות (<code>/forms/[id]/attendance</code>) —
+      תצוגה ייעודית שמתאימה לאופי הנתונים, ולא טבלת תגובות גנרית.
+    </div>
+  </div>
+
+  <!-- ───────────────────────────────── -->
+  <h2 id="results-view">תצוגת תוצאות</h2>
+
+  <p>בדף תוצאות (<code>/forms/[id]/results</code>) של טופס מסוג <code>approval</code> מוצגות שתי עמודות נוספות:</p>
+
+  <table>
+    <tr><th>עמודה</th><th>תיאור</th></tr>
+    <tr><td>סטטוס אישור</td><td>Badge צבעוני: <span class="status status-pending">ממתין</span> <span class="status" style="background:var(--primary-light);color:var(--primary);">בתהליך</span> <span class="status status-approved">אושר</span> <span class="status status-rejected">נדחה</span> <span class="status status-expired">פג תוקף</span></td></tr>
+    <tr><td>שלב נוכחי</td><td>X / N (למשל 2/3)</td></tr>
+  </table>
+
+  <p>ב-Dashboard, טפסי approval מוצגים עם Badge ירוק "סבב אישורים".</p>
+
+  <!-- ───────────────────────────────── -->
+  <h2 id="security">אבטחה</h2>
+
+  <table>
+    <tr><th style="width:35%">מנגנון</th><th>פירוט</th></tr>
+    <tr><td>Token hashing</td><td>נשמר רק <code>SHA-256 hash</code> — הערך המקורי לא נשמר ב-DB</td></tr>
+    <tr><td>TTL</td><td>72 שעות — אחרי כן Token פג אוטומטית</td></tr>
+    <tr><td>Single-use</td><td>אחרי שימוש ראשון <code>token_used_at</code> מתעדכן ו-Token נפסל</td></tr>
+    <tr><td>Security definer</td><td>כל RPCs רצים עם <code>security definer</code> — ללא תלות ב-RLS של הקורא</td></tr>
+    <tr><td>RLS</td><td>טבלאות approval — קריאה רק לבעל הטופס (join דרך <code>forms.user_id</code>)</td></tr>
+    <tr><td>Audit log</td><td>כל פעולה (init, token_issued, step_decision) נרשמת ב-<code>response_approval_events</code></td></tr>
+    <tr><td>Minimal exposure</td><td>דף אישור מציג רק שדות מותרים — לא את כל ה-payload</td></tr>
+  </table>
+
+  <div class="info-panel danger">
+    <span class="icon">🔒</span>
+    <div>
+      <strong>חשוב:</strong> הקישור <code>/approve/{token}</code> לא מכיל מזהי בקשה, שמות, או מידע מזהה.
+      רק token אקראי בן 48 תווים (hex).
+    </div>
+  </div>
+
+  <!-- ───────────────────────────────── -->
+  <h2 id="files">קבצים שהשתנו</h2>
+
+  <div class="file-tree">
+    <span class="new">+ src/lib/actions/approvals.ts</span> — backend lifecycle<br>
+    <span class="new">+ src/app/approve/[token]/page.tsx</span> — דף אישור ציבורי<br>
+    <span class="new">+ src/app/forms/[id]/approvals/page.tsx</span> — לוח אישורים ייעודי<br>
+    <span class="modified">~ src/lib/types.ts</span> — FormType, ApprovalWorkflow, ResponseApproval...<br>
+    <span class="modified">~ src/types/database.ts</span> — טבלאות + RPCs חדשים<br>
+    <span class="modified">~ supabase/schema.sql</span> — סכמה מלאה מסונכרנת<br>
+    <span class="modified">~ src/lib/actions/responses.ts</span> — init approval אחרי submit<br>
+    <span class="modified">~ src/components/form-builder/form-builder.tsx</span> — פאנל אישורים<br>
+    <span class="modified">~ src/components/results/responses-table.tsx</span> — עמודות סטטוס<br>
+    <span class="modified">~ src/app/forms/[id]/results/page.tsx</span> — טעינת approvals<br>
+    <span class="modified">~ src/components/dashboard/form-card.tsx</span> — badge ירוק<br>
+    <span class="modified">~ src/components/form-renderer/form-renderer.tsx</span> — warning<br>
+    <span class="unchanged">  src/lib/actions/forms.ts</span> — ללא שינוי<br>
+    <span class="unchanged">  src/app/f/[id]/page.tsx</span> — ללא שינוי<br>
+  </div>
+
+  <!-- ───────────────────────────────── -->
+  <h2 id="statuses">טבלת סטטוסים</h2>
+
+  <h3>סטטוס סבב (response_approvals)</h3>
+  <table>
+    <tr><th>סטטוס</th><th>משמעות</th></tr>
+    <tr><td><span class="status status-pending">pending</span></td><td>נוצר אך עדיין לא התחיל (שמור לשימוש עתידי)</td></tr>
+    <tr><td><span class="status" style="background:var(--primary-light);color:var(--primary);">in_progress</span></td><td>לפחות שלב אחד פעיל</td></tr>
+    <tr><td><span class="status status-approved">approved</span></td><td>כל השלבים אושרו</td></tr>
+    <tr><td><span class="status status-rejected">rejected</span></td><td>נדחה באחד השלבים</td></tr>
+    <tr><td><span class="status status-expired">expired</span></td><td>פג תוקף (שמור לשימוש עתידי)</td></tr>
+  </table>
+
+  <h3>סטטוס שלב (response_approval_steps)</h3>
+  <table>
+    <tr><th>סטטוס</th><th>משמעות</th></tr>
+    <tr><td><span class="status status-waiting">waiting</span></td><td>ממתין לתורו (שלבים עתידיים)</td></tr>
+    <tr><td><span class="status status-pending">pending</span></td><td>Token הונפק, ממתין להחלטה</td></tr>
+    <tr><td><span class="status status-approved">approved</span></td><td>מאשר אישר</td></tr>
+    <tr><td><span class="status status-rejected">rejected</span></td><td>מאשר דחה</td></tr>
+    <tr><td><span class="status status-expired">expired</span></td><td>Token פג ללא פעולה</td></tr>
+  </table>
+
+</div>
+
+</body>
+</html>

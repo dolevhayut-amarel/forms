@@ -1,7 +1,7 @@
 import { Metadata } from "next"
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { ArrowRight, Eye, Pencil, Users } from "lucide-react"
+import { ArrowRight, Eye, Pencil, Users, ClipboardCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -91,6 +91,14 @@ export default async function ResultsPage({ params }: Props) {
                   <Link href={`/forms/${id}/attendance`}>
                     <Users className="h-3 w-3" />
                     נוכחות
+                  </Link>
+                </Button>
+              )}
+              {form.form_type === "approval" && (
+                <Button variant="ghost" size="sm" asChild className="rounded-lg gap-1.5 h-7 text-xs text-white/70 hover:text-white hover:bg-white/10">
+                  <Link href={`/forms/${id}/approvals`}>
+                    <ClipboardCheck className="h-3 w-3" />
+                    אישורים
                   </Link>
                 </Button>
               )}

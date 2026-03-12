@@ -414,6 +414,20 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
               </Button>
             )}
 
+            {isEditing && formType === "approval" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="rounded-xl gap-1.5 h-8 text-xs text-white/80 hover:text-white hover:bg-white/10"
+              >
+                <Link href={`/forms/${initialForm.id}/approvals`}>
+                  <ClipboardCheck className="h-3.5 w-3.5" />
+                  אישורים
+                </Link>
+              </Button>
+            )}
+
             {isEditing && (
               <Button
                 variant="ghost"

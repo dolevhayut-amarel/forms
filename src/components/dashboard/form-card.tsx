@@ -165,6 +165,14 @@ export function FormCard({ form, responseCount }: FormCardProps) {
                   </Link>
                 </DropdownMenuItem>
               )}
+              {form.form_type === "approval" && (
+                <DropdownMenuItem asChild>
+                  <Link href={`/forms/${form.id}/approvals`} className="flex items-center gap-2">
+                    <ClipboardCheck className="h-3.5 w-3.5" />
+                    לוח אישורים
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem asChild>
                 <Link href={`/f/${form.id}`} target="_blank" className="flex items-center gap-2">
                   <Eye className="h-3.5 w-3.5" />
