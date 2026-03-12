@@ -89,7 +89,7 @@ function AiComputedElement({
     const res = await computeAIField({
       promptTemplate: field.prompt_template!,
       fieldValues,
-      model: field.ai_model,
+      ...(field.ai_model ? { model: field.ai_model } : {}),
     })
 
     if (res.error) {

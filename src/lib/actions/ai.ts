@@ -439,7 +439,7 @@ export async function computeAIField(input: {
     const client = new OpenAI({ apiKey })
 
     const completion = await client.chat.completions.create({
-      model: input.model || "gpt-5-mini",
+      model: (input.model && input.model !== "$undefined") ? input.model : "gpt-5-mini",
       messages: [
         {
           role: "system",

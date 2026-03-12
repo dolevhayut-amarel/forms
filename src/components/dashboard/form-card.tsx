@@ -18,6 +18,9 @@ import {
   QrCode,
   FolderOpen,
   FolderInput,
+  Plus,
+  Check,
+  X,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -70,6 +73,8 @@ export function FormCard({ form, responseCount, allFolders = [] }: FormCardProps
   const [shareOpen, setShareOpen] = useState(false)
   const [folderOpen, setFolderOpen] = useState(false)
   const [movingFolder, setMovingFolder] = useState(false)
+  const [newFolderName, setNewFolderName] = useState("")
+  const [creatingFolder, setCreatingFolder] = useState(false)
 
   async function handleDelete() {
     setDeleting(true)
@@ -400,7 +405,7 @@ export function FormCard({ form, responseCount, allFolders = [] }: FormCardProps
               בחר תיקיה עבור &quot;{form.name}&quot;
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-1.5 max-h-52 overflow-y-auto">
+          <div className="space-y-1.5 max-h-60 overflow-y-auto">
             <button
               type="button"
               disabled={movingFolder}
@@ -441,6 +446,62 @@ export function FormCard({ form, responseCount, allFolders = [] }: FormCardProps
                 {f}
               </button>
             ))}
+
+            <div className="border-t border-neutral-100 pt-1.5 mt-1.5">
+              {creatingFolder ? (
+                <div className="flex items-center gap-1.5 px-1">
+                  <input
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    onKeyDown={async (e) => {
+                      if (e.key === "Enter" && newFolderName.trim()) {
+                        setMovingFolder(true)
+                        await updateForm(form.id, { folder: newFolderName.trim() } as Parameters<typeof updateForm>[1])
+                        setFolderOpen(false)
+                        setMovingFolder(false)
+                        setCreatingFolder(false)
+                        setNewFolderName("")
+                        toast.success(`הטופס הועבר ל"${newFolderName.trim()}"`)
+                      }
+                      if (e.key === "Escape") { setCreatingFolder(false); setNewFolderName("") }
+                    }}
+                    placeholder="שם תיקיה חדשה..."
+                    autoFocus
+                    className="flex-1 h-8 rounded-lg border border-neutral-200 px-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-400"
+                    dir="rtl"
+                  />
+                  <button
+                    type="button"
+                    disabled={movingFolder || !newFolderName.trim()}
+                    onClick={async () => {
+                      if (!newFolderName.trim()) return
+                      setMovingFolder(true)
+                      await updateForm(form.id, { folder: newFolderName.trim() } as Parameters<typeof updateForm>[1])
+                      setFolderOpen(false)
+                      setMovingFolder(false)
+                      setCreatingFolder(false)
+                      setNewFolderName("")
+                      toast.success(`הטופס הועבר ל"${newFolderName.trim()}"`)
+                    }}
+                    className="text-green-600 hover:text-green-700"
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button type="button" onClick={() => { setCreatingFolder(false); setNewFolderName("") }} className="text-neutral-400 hover:text-neutral-600">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setCreatingFolder(true)}
+                  className="w-full text-start px-3 py-2.5 rounded-xl text-sm flex items-center gap-2 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-50 transition-colors"
+                >
+                  <Plus className="h-3.5 w-3.5 shrink-0" />
+                  תיקיה חדשה...
+                </button>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
