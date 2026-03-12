@@ -94,11 +94,35 @@ export interface FieldConfig {
   validation?: FieldValidation    // text field validation rule
   conditions?: FieldCondition     // visibility rules — shown when conditions met
   attendance_role?: "id_number" | "name" | "division" | "direction"
+  show_to_approver?: boolean      // approval forms: visible in approver page (default: true)
 }
 
 // ─── Form types ───────────────────────────────────────────────────────────────
 
-export type FormType = "general" | "attendance"
+export type FormType = "general" | "attendance" | "approval"
+
+// ─── Approval workflow config ─────────────────────────────────────────────────
+
+export type ApprovalTargetSource = "fixed" | "from_field" | "from_option_map"
+
+export interface ApprovalWorkflowStep {
+  approver_name: string
+  channel: "email" | "whatsapp"
+  source_type: ApprovalTargetSource
+  target?: string
+  source_field_id?: string
+  target_by_value?: Record<string, string>
+}
+
+export interface ApprovalWorkflow {
+  enabled: boolean
+  steps: ApprovalWorkflowStep[]
+}
+
+export interface ApprovalFieldVisibility {
+  mode: "all" | "selected"
+  visible_field_ids?: string[]
+}
 
 export interface FormSettings {
   submit_message?: string
@@ -108,6 +132,8 @@ export interface FormSettings {
   attendance_id_field?: string
   attendance_direction_field?: string
   title_align?: "right" | "center" | "left"
+  approval_workflow?: ApprovalWorkflow
+  approval_field_visibility?: ApprovalFieldVisibility
 }
 
 export interface FormSchema {
@@ -133,6 +159,35 @@ export interface FormResponse {
   form_id: string
   data: Record<string, string | string[]>
   submitted_at: string
+  approval?: ResponseApproval | null
+}
+
+// ─── Approval runtime types ──────────────────────────────────────────────────
+
+export type ApprovalStatus = "pending" | "in_progress" | "approved" | "rejected" | "expired"
+export type ApprovalStepStatus = "waiting" | "pending" | "approved" | "rejected" | "expired"
+
+export interface ResponseApprovalStep {
+  id: string
+  response_approval_id: string
+  step_index: number
+  approver_name: string
+  approver_channel: "email" | "whatsapp"
+  approver_target: string
+  status: ApprovalStepStatus
+  acted_at: string | null
+  decision_note: string | null
+}
+
+export interface ResponseApproval {
+  id: string
+  response_id: string
+  form_id: string
+  status: ApprovalStatus
+  current_step_index: number
+  started_at: string
+  finished_at: string | null
+  steps: ResponseApprovalStep[]
 }
 
 // ─── Presence helpers (attendance forms) ─────────────────────────────────────

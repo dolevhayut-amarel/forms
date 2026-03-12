@@ -38,6 +38,9 @@ import {
   AlignRight,
   AlignCenter,
   AlignLeft,
+  Plus,
+  Trash2,
+  ClipboardCheck,
 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -46,6 +49,15 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { AmarelLogo } from "@/components/layout/amarel-nav"
 import {
   Dialog,
@@ -63,6 +75,8 @@ import { createForm, updateForm } from "@/lib/actions/forms"
 import {
   buildAttendanceFields,
   isLayoutField,
+  type ApprovalWorkflowStep,
+  type ApprovalTargetSource,
   type FieldConfig,
   type FieldType,
   type Form,
@@ -72,6 +86,18 @@ import {
 interface FormBuilderProps {
   initialForm?: Form
 }
+
+type EditableApprovalStep = ApprovalWorkflowStep & { _id: string }
+
+const DEFAULT_STEP = (): EditableApprovalStep => ({
+  _id: nanoid(),
+  approver_name: "",
+  channel: "email",
+  source_type: "fixed",
+  target: "",
+  source_field_id: "",
+  target_by_value: {},
+})
 
 export function FormBuilder({ initialForm }: FormBuilderProps) {
   const router = useRouter()
@@ -90,6 +116,14 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
   )
   const [titleAlign, setTitleAlign] = useState<"right" | "center" | "left">(
     initialForm?.settings?.title_align ?? "right"
+  )
+  const [approvalSteps, setApprovalSteps] = useState<EditableApprovalStep[]>(
+    initialForm?.settings?.approval_workflow?.steps?.length
+      ? initialForm.settings.approval_workflow.steps.map((s) => ({ ...s, _id: nanoid(), source_type: s.source_type ?? "fixed", target: s.target ?? "", source_field_id: s.source_field_id ?? "", target_by_value: s.target_by_value ?? {} }))
+      : [DEFAULT_STEP()]
+  )
+  const [approvalVisMode, setApprovalVisMode] = useState<"all" | "selected">(
+    initialForm?.settings?.approval_field_visibility?.mode ?? "all"
   )
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null)
   // null = form settings panel; string = field editor
@@ -175,11 +209,77 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
     toast.success("תבנית נוכחות הוגדרה!")
   }
 
+  const inputFields = fields.filter((f) => !isLayoutField(f.type))
+
+  const getFieldOptions = useCallback((fieldId: string): string[] => {
+    const field = inputFields.find((item) => item.id === fieldId)
+    if (!field) return []
+    if (field.type === "entry_exit") return ["כניסה", "יציאה"]
+    if (field.type === "checkbox") return ["true"]
+    return field.options ?? []
+  }, [inputFields])
+
+  function updateApprovalStep(index: number, patch: Partial<EditableApprovalStep>) {
+    setApprovalSteps((prev) => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)))
+  }
+
+  function resetStepSource(index: number, sourceType: ApprovalTargetSource) {
+    updateApprovalStep(index, { source_type: sourceType, source_field_id: "", target: "", target_by_value: {} })
+  }
+
+  function updateStepTargetMap(index: number, key: string, value: string) {
+    setApprovalSteps((prev) => prev.map((s, i) => {
+      if (i !== index) return s
+      return { ...s, target_by_value: { ...(s.target_by_value ?? {}), [key]: value } }
+    }))
+  }
+
+  function addApprovalStep() {
+    setApprovalSteps((prev) => [...prev, DEFAULT_STEP()])
+  }
+
+  function removeApprovalStep(index: number) {
+    setApprovalSteps((prev) => {
+      const next = prev.filter((_, i) => i !== index)
+      return next.length > 0 ? next : [DEFAULT_STEP()]
+    })
+  }
+
+  function applyApprovalTemplate() {
+    setFormType("approval")
+    setName((prev) => prev || "בקשה לאישור")
+    setDescription((prev) => prev || "")
+    setSubmitLabel("שלח לאישור")
+    setApprovalSteps([DEFAULT_STEP()])
+    setSelectedFieldId(null)
+    setRightPanel("settings")
+    toast.success("תבנית סבב אישורים הוגדרה!")
+  }
+
   const handleSave = useCallback(
     async (publish?: boolean) => {
       if (!name.trim()) {
         toast.error("אנא תן שם לטופס")
         return
+      }
+
+      if (formType === "approval") {
+        const invalid = approvalSteps.some((step) => {
+          if (!step.approver_name.trim()) return true
+          const src = step.source_type ?? "fixed"
+          if (src === "fixed") return !step.target?.trim()
+          if (!step.source_field_id?.trim()) return true
+          if (src === "from_option_map") {
+            const opts = getFieldOptions(step.source_field_id!)
+            if (opts.length === 0) return true
+            return opts.some((opt) => !(step.target_by_value?.[opt] ?? "").trim())
+          }
+          return false
+        })
+        if (invalid) {
+          toast.error("סבב אישורים: יש להשלים הגדרות מאשר לכל שלב")
+          return
+        }
       }
 
       if (publish === undefined) setSaving(true)
@@ -203,6 +303,25 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
             title_align: titleAlign,
             ...(dirField && { attendance_direction_field: dirField.id }),
             ...(idField && { attendance_id_field: idField.id }),
+            ...(formType === "approval" ? {
+              approval_workflow: {
+                enabled: true,
+                steps: approvalSteps.map((s) => ({
+                  approver_name: s.approver_name.trim(),
+                  channel: s.channel,
+                  source_type: s.source_type ?? "fixed",
+                  ...(s.source_type === "fixed" ? { target: (s.target ?? "").trim() } : {}),
+                  ...(s.source_type !== "fixed" ? { source_field_id: s.source_field_id?.trim() ?? "" } : {}),
+                  ...(s.source_type === "from_option_map" ? { target_by_value: Object.fromEntries(Object.entries(s.target_by_value ?? {}).map(([k, v]) => [k, v.trim()])) } : {}),
+                })),
+              },
+              approval_field_visibility: {
+                mode: approvalVisMode,
+                ...(approvalVisMode === "selected" ? {
+                  visible_field_ids: fields.filter((f) => !isLayoutField(f.type) && f.show_to_approver !== false).map((f) => f.id),
+                } : {}),
+              },
+            } : {}),
           },
           schema: {},
           ...(publish !== undefined ? { is_published: publish } : {}),
@@ -234,7 +353,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
         setPublishing(false)
       }
     },
-    [name, description, fields, formType, submitLabel, afterSubmit, redirectUrl, titleAlign, isEditing, initialForm, router]
+    [name, description, fields, formType, submitLabel, afterSubmit, redirectUrl, titleAlign, approvalSteps, approvalVisMode, getFieldOptions, isEditing, initialForm, router]
   )
 
   return (
@@ -269,6 +388,12 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
                 <Badge className="text-xs rounded-lg shrink-0 bg-white/15 text-white border-white/20 hover:bg-white/20">
                   <Users className="h-3 w-3 me-1" />
                   נוכחות
+                </Badge>
+              )}
+              {formType === "approval" && (
+                <Badge className="text-xs rounded-lg shrink-0 bg-emerald-500/20 text-emerald-200 border-emerald-400/30 hover:bg-emerald-500/30">
+                  <ClipboardCheck className="h-3 w-3 me-1" />
+                  סבב אישורים
                 </Badge>
               )}
             </div>
@@ -458,6 +583,109 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
 
                   <Separator />
 
+                  {/* Approval workflow panel (only for approval type) */}
+                  {formType === "approval" && (
+                    <div className="space-y-3">
+                      <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide flex items-center gap-1.5">
+                        <ClipboardCheck className="h-3.5 w-3.5" />
+                        שלבי אישור
+                      </Label>
+                      <div className="space-y-3 rounded-xl border border-neutral-200 p-3 bg-neutral-50/50">
+                        {approvalSteps.map((step, index) => (
+                          <div key={step._id} className="space-y-2 rounded-lg border border-neutral-200 bg-white p-3">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-semibold text-neutral-600">שלב {index + 1}</p>
+                              <button type="button" onClick={() => removeApprovalStep(index)} className="text-neutral-400 hover:text-red-500" aria-label={`הסר שלב ${index + 1}`}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                            <Input value={step.approver_name} onChange={(e) => updateApprovalStep(index, { approver_name: e.target.value })} placeholder="שם מאשר" className="h-8 rounded-lg text-xs" />
+                            <Select value={step.channel} onValueChange={(v: "email" | "whatsapp") => updateApprovalStep(index, { channel: v })}>
+                              <SelectTrigger className="w-full h-8 rounded-lg text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="email">Email</SelectItem>
+                                <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Select value={step.source_type ?? "fixed"} onValueChange={(v: ApprovalTargetSource) => resetStepSource(index, v)}>
+                              <SelectTrigger className="w-full h-8 rounded-lg text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="fixed">יעד קבוע</SelectItem>
+                                <SelectItem value="from_field">יעד משדה בטופס</SelectItem>
+                                <SelectItem value="from_option_map">יעד ממיפוי לפי בחירה</SelectItem>
+                              </SelectContent>
+                            </Select>
+
+                            {(step.source_type ?? "fixed") === "fixed" && (
+                              <Textarea value={step.target ?? ""} onChange={(e) => updateApprovalStep(index, { target: e.target.value })}
+                                placeholder={step.channel === "email" ? "כתובת אימייל" : "מספר WhatsApp"}
+                                className="min-h-14 rounded-lg text-xs" />
+                            )}
+
+                            {(step.source_type ?? "fixed") !== "fixed" && (
+                              <Select value={step.source_field_id ?? ""} onValueChange={(v) => updateApprovalStep(index, { source_field_id: v })}>
+                                <SelectTrigger className="w-full h-8 rounded-lg text-xs"><SelectValue placeholder="בחר שדה מקור" /></SelectTrigger>
+                                <SelectContent>
+                                  {inputFields.map((f) => <SelectItem key={f.id} value={f.id}>{f.label || f.id}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            )}
+
+                            {(step.source_type ?? "fixed") === "from_option_map" && step.source_field_id && (
+                              <div className="space-y-2 rounded-md border border-neutral-200 p-2 bg-neutral-50">
+                                {getFieldOptions(step.source_field_id).map((opt) => (
+                                  <div key={`${step._id}-${opt}`} className="space-y-1">
+                                    <p className="text-[11px] text-neutral-500">ערך: <span className="font-medium text-neutral-700">{opt}</span></p>
+                                    <Input value={step.target_by_value?.[opt] ?? ""} onChange={(e) => updateStepTargetMap(index, opt, e.target.value)}
+                                      placeholder={step.channel === "email" ? "אימייל ליעד זה" : "WhatsApp ליעד זה"} className="h-8 rounded-lg text-xs" />
+                                  </div>
+                                ))}
+                                {getFieldOptions(step.source_field_id).length === 0 && (
+                                  <p className="text-xs text-amber-600">לשדה שנבחר אין אפשרויות למיפוי.</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        <Button type="button" variant="outline" size="sm" onClick={addApprovalStep} className="w-full h-8 rounded-lg text-xs gap-1.5">
+                          <Plus className="h-3.5 w-3.5" />
+                          הוסף שלב אישור
+                        </Button>
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+                          שדות גלויים למאשר
+                        </Label>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => setApprovalVisMode("all")}
+                            className={`flex-1 py-2 px-3 rounded-xl border text-xs font-medium transition-all ${approvalVisMode === "all" ? "border-neutral-900 bg-neutral-50 text-neutral-900" : "border-neutral-200 text-neutral-500 hover:border-neutral-300"}`}>
+                            הכל
+                          </button>
+                          <button type="button" onClick={() => setApprovalVisMode("selected")}
+                            className={`flex-1 py-2 px-3 rounded-xl border text-xs font-medium transition-all ${approvalVisMode === "selected" ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-neutral-200 text-neutral-500 hover:border-neutral-300"}`}>
+                            רק מסומנים
+                          </button>
+                        </div>
+                        {approvalVisMode === "selected" && (
+                          <div className="space-y-1.5 mt-2 rounded-lg border border-neutral-200 p-2 bg-neutral-50">
+                            {inputFields.map((f) => (
+                              <label key={f.id} className="flex items-center gap-2 text-xs text-neutral-700 cursor-pointer">
+                                <Checkbox
+                                  checked={f.show_to_approver !== false}
+                                  onCheckedChange={(checked) => updateField({ ...f, show_to_approver: Boolean(checked) })}
+                                />
+                                {f.label || f.id}
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <Separator />
 
                   {/* After submit action */}
@@ -500,17 +728,28 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
                     )}
                   </div>
 
-                  {/* Attendance template */}
+                  {/* Quick templates */}
                   {(!isEditing || formType === "general") && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setAttendanceDialog(true)}
-                      className="w-full h-8 rounded-xl gap-1.5 text-xs border-blue-200 text-blue-600 hover:bg-blue-50"
-                    >
-                      <Sparkles className="h-3.5 w-3.5" />
-                      תבנית מהירה: נוכחות
-                    </Button>
+                    <div className="space-y-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAttendanceDialog(true)}
+                        className="w-full h-8 rounded-xl gap-1.5 text-xs border-blue-200 text-blue-600 hover:bg-blue-50"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        תבנית מהירה: נוכחות
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={applyApprovalTemplate}
+                        className="w-full h-8 rounded-xl gap-1.5 text-xs border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                      >
+                        <ClipboardCheck className="h-3.5 w-3.5" />
+                        תבנית מהירה: סבב אישורים
+                      </Button>
+                    </div>
                   )}
 
                   {/* Stats */}

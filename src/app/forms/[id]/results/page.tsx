@@ -11,6 +11,7 @@ import { CopyLinkButton } from "@/components/results/copy-link-button"
 import { ShareFormDialog } from "@/components/results/share-form-dialog"
 import { AppHeader } from "@/components/layout/amarel-nav"
 import { createClient } from "@/lib/supabase/server"
+import { getResponseApprovalsByForm } from "@/lib/actions/approvals"
 import { rowToForm, rowToResponse } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
@@ -58,6 +59,10 @@ export default async function ResultsPage({ params }: Props) {
     .order("submitted_at", { ascending: false })
 
   const responses = (responseRows ?? []).map(rowToResponse)
+  const isApproval = form.form_type === "approval"
+  const { byResponseId: approvalsByResponseId } = isApproval
+    ? await getResponseApprovalsByForm(id)
+    : { byResponseId: {} }
   const lastResponse = responses.length > 0 ? responses[0].submitted_at : null
 
   return (
@@ -148,7 +153,12 @@ export default async function ResultsPage({ params }: Props) {
         {/* Table */}
         <div>
           <h2 className="text-sm font-semibold text-neutral-700 mb-4">כל התגובות</h2>
-          <ResponsesTable fields={form.fields} responses={responses} />
+          <ResponsesTable
+            fields={form.fields}
+            responses={responses}
+            approvalsByResponseId={approvalsByResponseId}
+            showApprovalColumns={isApproval}
+          />
         </div>
       </main>
     </div>

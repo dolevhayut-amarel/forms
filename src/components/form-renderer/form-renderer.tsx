@@ -195,6 +195,9 @@ export function FormRenderer({ form }: FormRendererProps) {
       if (result.error) {
         toast.error(result.error)
       } else {
+        if (result.warning) {
+          toast.warning(result.warning)
+        }
         if (afterSubmit === "redirect" && redirectUrl) {
           window.location.href = redirectUrl
         } else {

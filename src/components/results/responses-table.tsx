@@ -9,16 +9,34 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import type { FieldConfig, FormResponse } from "@/lib/types"
+import type { FieldConfig, FormResponse, ResponseApproval, ApprovalStatus } from "@/lib/types"
 
 interface ResponsesTableProps {
   fields: FieldConfig[]
   responses: FormResponse[]
+  approvalsByResponseId?: Record<string, ResponseApproval>
+  showApprovalColumns?: boolean
   /** When false, cells are wider and text wraps instead of truncating (e.g. in dialog) */
   compact?: boolean
 }
 
-export function ResponsesTable({ fields, responses, compact = true }: ResponsesTableProps) {
+const APPROVAL_LABEL: Record<ApprovalStatus, string> = {
+  pending: "ממתין",
+  in_progress: "בתהליך",
+  approved: "אושר",
+  rejected: "נדחה",
+  expired: "פג תוקף",
+}
+
+const APPROVAL_CLASS: Record<ApprovalStatus, string> = {
+  pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  in_progress: "bg-blue-50 text-blue-700 border-blue-200",
+  approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  rejected: "bg-red-50 text-red-700 border-red-200",
+  expired: "bg-neutral-100 text-neutral-600 border-neutral-200",
+}
+
+export function ResponsesTable({ fields, responses, approvalsByResponseId = {}, showApprovalColumns = false, compact = true }: ResponsesTableProps) {
   if (responses.length === 0) {
     return (
       <div className="text-center py-12 text-neutral-400 text-sm">
@@ -52,6 +70,12 @@ export function ResponsesTable({ fields, responses, compact = true }: ResponsesT
             <TableHead className="text-xs font-semibold text-neutral-500 w-32 text-right">
               זמן שליחה
             </TableHead>
+            {showApprovalColumns && (
+              <>
+                <TableHead className="text-xs font-semibold text-neutral-500 min-w-[110px] text-right">סטטוס אישור</TableHead>
+                <TableHead className="text-xs font-semibold text-neutral-500 min-w-[90px] text-right">שלב</TableHead>
+              </>
+            )}
             {fields.map((f) => (
               <TableHead
                 key={f.id}
@@ -75,6 +99,23 @@ export function ResponsesTable({ fields, responses, compact = true }: ResponsesT
                   minute: "2-digit",
                 })}
               </TableCell>
+              {showApprovalColumns && (() => {
+                const appr = approvalsByResponseId[response.id]
+                return (
+                  <>
+                    <TableCell className="text-right">
+                      {appr ? (
+                        <Badge className={`rounded-md border text-xs ${APPROVAL_CLASS[appr.status]}`}>
+                          {APPROVAL_LABEL[appr.status]}
+                        </Badge>
+                      ) : <span className="text-neutral-300">—</span>}
+                    </TableCell>
+                    <TableCell className="text-right text-xs text-neutral-600">
+                      {appr ? `${appr.current_step_index + 1}/${Math.max(appr.steps.length, 1)}` : "—"}
+                    </TableCell>
+                  </>
+                )
+              })()}
               {fields.map((f) => (
                 <TableCell
                   key={f.id}
