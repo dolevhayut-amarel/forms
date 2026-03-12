@@ -18,6 +18,7 @@ import {
   MapPin,
   Layers,
   Search,
+  Sparkles,
 } from "lucide-react"
 import { isLayoutField, type FieldConfig } from "@/lib/types"
 
@@ -239,6 +240,20 @@ function PreviewField({ field }: { field: FieldConfig }) {
     )
   }
 
+  if (field.type === "ai_computed") {
+    return (
+      <div className="rounded-xl border-2 border-dashed border-violet-300 bg-gradient-to-br from-violet-50/50 to-purple-50/50 px-4 py-3 flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-violet-600 shrink-0" />
+        <span className="text-sm font-semibold text-violet-700">
+          {field.label || <span className="text-violet-300">חישוב AI</span>}
+        </span>
+        <span className="text-[10px] bg-violet-100 text-violet-600 rounded-md px-1.5 py-0.5 font-medium ms-auto">
+          AI
+        </span>
+      </div>
+    )
+  }
+
   // Input fields
   return (
     <div className="space-y-1.5 p-1">
@@ -277,6 +292,7 @@ function FieldTypeIcon({ type }: { type: FieldConfig["type"] }) {
   if (type === "image") return <ImageIcon className={cls} />
   if (type === "link") return <Link2 className={cls} />
   if (type === "dataset_lookup") return <Search className={cls} />
+  if (type === "ai_computed") return <Sparkles className={cls} />
   return null
 }
 

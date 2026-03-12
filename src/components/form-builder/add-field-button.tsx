@@ -21,6 +21,7 @@ import {
   MapPin,
   Layers,
   Search,
+  Sparkles,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -166,6 +167,12 @@ const LAYOUT_FIELD_TYPES: {
     label: "תצוגת מאגר",
     icon: <Search className="h-4 w-4" />,
     description: "הצגת ערך ממאגר מידע לפי בחירה",
+  },
+  {
+    type: "ai_computed",
+    label: "חישוב AI",
+    icon: <Sparkles className="h-4 w-4" />,
+    description: "חישוב חכם מבוסס AI לפי ערכי שדות",
   },
 ]
 

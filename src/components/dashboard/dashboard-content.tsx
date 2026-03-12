@@ -33,16 +33,14 @@ export function DashboardContent({ formsWithCounts }: DashboardContentProps) {
 
   return (
     <>
-      {folders.length > 0 && (
-        <div className="mb-5">
-          <FolderTabs
-            folders={folders}
-            activeFolder={activeFolder}
-            onSelect={setActiveFolder}
-            onCreateFolder={handleCreateFolder}
-          />
-        </div>
-      )}
+      <div className="mb-5">
+        <FolderTabs
+          folders={folders}
+          activeFolder={activeFolder}
+          onSelect={setActiveFolder}
+          onCreateFolder={handleCreateFolder}
+        />
+      </div>
 
       {filtered.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-2xl border border-neutral-200">

@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
-import { Loader2, CheckCircle2, LogIn, LogOut, BookmarkCheck, Bookmark } from "lucide-react"
+import { Loader2, CheckCircle2, LogIn, LogOut, BookmarkCheck, Bookmark, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TextField } from "./fields/text-field"
 import { LongAnswerField } from "./fields/long-answer-field"
@@ -54,6 +54,108 @@ function readMemory(formId: string): FormMemory | null {
 function hasActiveMemory(formId: string): boolean {
   const m = readMemory(formId)
   return !!m && m.savedFieldIds.length > 0
+}
+
+// ─── AI Computed Field element ────────────────────────────────────────────────
+
+function AiComputedElement({
+  field,
+  allValues,
+  allFields,
+}: {
+  field: FieldConfig
+  allValues?: FormValues
+  allFields?: FieldConfig[]
+}) {
+  const [result, setResult] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  if (!field.prompt_template || !allValues || !allFields) return null
+
+  const fieldValues: Record<string, string> = {}
+  for (const f of allFields) {
+    if (isLayoutField(f.type)) continue
+    const val = allValues[f.id]
+    fieldValues[f.label] = Array.isArray(val) ? val.join(", ") : String(val ?? "")
+  }
+
+  async function handleCompute() {
+    setLoading(true)
+    setError(null)
+    setResult(null)
+
+    const { computeAIField } = await import("@/lib/actions/ai")
+    const res = await computeAIField({
+      promptTemplate: field.prompt_template!,
+      fieldValues,
+      model: field.ai_model,
+    })
+
+    if (res.error) {
+      setError(res.error)
+    } else {
+      setResult(res.result ?? null)
+    }
+    setLoading(false)
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50 overflow-hidden">
+      <div className="px-4 py-3 flex items-center gap-2 border-b border-violet-100">
+        <Sparkles className="h-4 w-4 text-violet-600 shrink-0" />
+        <span className="text-sm font-semibold text-violet-800">
+          {field.label || "חישוב AI"}
+        </span>
+      </div>
+
+      <div className="px-4 py-3">
+        {result ? (
+          <div className="space-y-3">
+            <div className="text-sm text-neutral-800 leading-relaxed whitespace-pre-wrap">
+              {result}
+            </div>
+            <button
+              type="button"
+              onClick={handleCompute}
+              disabled={loading}
+              className="text-xs text-violet-500 hover:text-violet-700 font-medium transition-colors"
+            >
+              {loading ? "מחשב..." : "חשב שוב"}
+            </button>
+          </div>
+        ) : (
+          <div className="text-center py-2">
+            {error && (
+              <p className="text-xs text-red-500 mb-2">{error}</p>
+            )}
+            <Button
+              type="button"
+              onClick={handleCompute}
+              disabled={loading}
+              variant="outline"
+              className="rounded-xl gap-2 h-10 px-5 border-violet-300 text-violet-700 hover:bg-violet-100"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  מחשב...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  חשב
+                </>
+              )}
+            </Button>
+            <p className="text-[11px] text-violet-400 mt-2">
+              מלא את השדות ולחץ לקבלת תוצאה מבוססת AI
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 // ─── Resolve dataset-backed options ────────────────────────────────────────────
@@ -350,6 +452,7 @@ export function FormRenderer({ form }: FormRendererProps) {
                     onChange={(val) => setValue(field.id, val)}
                     datasets={datasets}
                     allValues={values}
+                    allFields={form.fields}
                   />
                 </div>
               )
@@ -485,6 +588,7 @@ function FieldRenderer({
   onChange,
   datasets,
   allValues,
+  allFields,
 }: {
   field: FieldConfig
   value: string | string[]
@@ -492,6 +596,7 @@ function FieldRenderer({
   onChange: (val: string | string[]) => void
   datasets?: FormDataset[]
   allValues?: FormValues
+  allFields?: FieldConfig[]
 }) {
   // Layout / visual elements
   if (field.type === "heading")    return <HeadingElement field={field} />
@@ -502,6 +607,7 @@ function FieldRenderer({
   if (field.type === "link")       return <LinkElement field={field} />
   if (field.type === "section")    return <SectionElement field={field} />
   if (field.type === "dataset_lookup") return <DatasetLookupElement field={field} datasets={datasets} allValues={allValues} />
+  if (field.type === "ai_computed") return <AiComputedElement field={field} allValues={allValues} allFields={allFields} />
 
   // Input fields
   if (field.type === "text") {

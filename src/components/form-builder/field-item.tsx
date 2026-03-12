@@ -24,6 +24,7 @@ import {
   MapPin,
   Layers,
   Search,
+  Sparkles,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { isLayoutField, type FieldConfig } from "@/lib/types"
@@ -49,6 +50,7 @@ const TYPE_ICON: Record<FieldConfig["type"], React.ReactNode> = {
   link:         <Link2 className="h-3.5 w-3.5" />,
   section:      <Layers className="h-3.5 w-3.5" />,
   dataset_lookup: <Search className="h-3.5 w-3.5" />,
+  ai_computed: <Sparkles className="h-3.5 w-3.5" />,
 }
 
 const TYPE_LABEL: Record<FieldConfig["type"], string> = {
@@ -72,6 +74,7 @@ const TYPE_LABEL: Record<FieldConfig["type"], string> = {
   link:         "לינק",
   section:      "סקשן",
   dataset_lookup: "תצוגת מאגר",
+  ai_computed: "חישוב AI",
 }
 
 interface FieldItemProps {

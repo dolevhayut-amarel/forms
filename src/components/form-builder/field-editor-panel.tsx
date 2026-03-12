@@ -51,6 +51,7 @@ const TYPE_LABEL: Record<FieldConfig["type"], string> = {
   link: "לינק",
   section: "סקשן",
   dataset_lookup: "תצוגת מאגר",
+  ai_computed: "חישוב AI",
 }
 
 interface FieldEditorPanelProps {
@@ -604,6 +605,64 @@ export function FieldEditorPanel({ field, onChange, allFields, datasets = [] }: 
               </div>
             </div>
           )}
+        </>
+      )}
+
+      {field.type === "ai_computed" && (
+        <>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+              תווית
+            </Label>
+            <Input
+              value={field.label}
+              onChange={(e) => update({ label: e.target.value })}
+              placeholder="לדוגמה: המלצת ציוד מיחשוב"
+              className="h-9 rounded-xl text-sm"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+              פרומפט AI
+            </Label>
+            <Textarea
+              value={field.prompt_template ?? ""}
+              onChange={(e) => update({ prompt_template: e.target.value })}
+              placeholder={"השתמש ב-{{תווית שדה}} כדי להזריק ערכים.\n\nלדוגמה:\nחשב איזה ציוד מיחשוב העובד צריך על סמך דרג {{דרג עובד}} ואחוזי משרה {{אחוזי משרה}}."}
+              className="min-h-[120px] rounded-xl text-sm resize-none font-mono"
+              dir="rtl"
+            />
+          </div>
+
+          {allFields.filter((f) => !isLayoutField(f.type) && f.id !== field.id).length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-neutral-500">שדות זמינים להזרקה</Label>
+              <div className="flex flex-wrap gap-1">
+                {allFields
+                  .filter((f) => !isLayoutField(f.type) && f.id !== field.id && f.label)
+                  .map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => update({
+                        prompt_template: (field.prompt_template ?? "") + `{{${f.label}}}`,
+                      })}
+                      className="text-[10px] px-2 py-1 rounded-md bg-violet-50 text-violet-600 border border-violet-200 hover:bg-violet-100 transition-colors"
+                    >
+                      {`{{${f.label}}}`}
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-violet-50 rounded-xl border border-violet-200 p-3">
+            <p className="text-xs text-violet-600">
+              המשיב ילחץ &quot;חשב&quot; והתוצאה תוצג מיידית בטופס.
+              עלות: ~$0.0001 לחישוב.
+            </p>
+          </div>
         </>
       )}
 

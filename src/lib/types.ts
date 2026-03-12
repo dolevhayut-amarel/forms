@@ -16,7 +16,7 @@ export type InputFieldType =
   | "signature"
 
 /** Layout/visual fields — display only, no answer collected */
-export type LayoutFieldType = "heading" | "subheading" | "paragraph" | "divider" | "image" | "link" | "section" | "dataset_lookup"
+export type LayoutFieldType = "heading" | "subheading" | "paragraph" | "divider" | "image" | "link" | "section" | "dataset_lookup" | "ai_computed"
 
 export type FieldType = InputFieldType | LayoutFieldType
 
@@ -29,6 +29,7 @@ export const LAYOUT_FIELD_TYPES: LayoutFieldType[] = [
   "link",
   "section",
   "dataset_lookup",
+  "ai_computed",
 ]
 
 export function isLayoutField(type: FieldType): type is LayoutFieldType {
@@ -110,6 +111,8 @@ export interface FieldConfig {
   lookup_field_id?: string     // dataset_lookup: which field's value to watch
   lookup_dataset_id?: string   // dataset_lookup: which dataset to search
   lookup_column_id?: string    // dataset_lookup: which column value to display
+  prompt_template?: string     // ai_computed: prompt with {{field label}} placeholders
+  ai_model?: string            // ai_computed: model to use (default: gpt-5-mini)
 }
 
 // ─── Form types ───────────────────────────────────────────────────────────────

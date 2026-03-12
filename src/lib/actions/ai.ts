@@ -419,3 +419,44 @@ export async function chatWithFormAI(input: {
     }
   }
 }
+
+// ─── v3: AI Computed Field ────────────────────────────────────────────────────
+
+export async function computeAIField(input: {
+  promptTemplate: string
+  fieldValues: Record<string, string>
+  model?: string
+}): Promise<{ result?: string; error?: string }> {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) return { error: "OpenAI API key not configured" }
+
+  let resolvedPrompt = input.promptTemplate
+  for (const [label, value] of Object.entries(input.fieldValues)) {
+    resolvedPrompt = resolvedPrompt.replaceAll(`{{${label}}}`, value || "(לא מולא)")
+  }
+
+  try {
+    const client = new OpenAI({ apiKey })
+
+    const completion = await client.chat.completions.create({
+      model: input.model || "gpt-5-mini",
+      messages: [
+        {
+          role: "system",
+          content: "אתה עוזר חכם בתוך טופס דיגיטלי. ענה בקצרה ובצורה מעשית בעברית. הצג את התשובה בצורה מסודרת עם נקודות כשרלוונטי. אל תוסיף הסברים מיותרים.",
+        },
+        { role: "user", content: resolvedPrompt },
+      ],
+      max_tokens: 1024,
+    })
+
+    const text = completion.choices[0]?.message?.content?.trim()
+    if (!text) return { error: "לא התקבלה תשובה מהמודל" }
+
+    return { result: text }
+  } catch (err) {
+    console.error("AI compute error:", err)
+    const message = err instanceof Error ? err.message : "שגיאה לא צפויה"
+    return { error: message }
+  }
+}
