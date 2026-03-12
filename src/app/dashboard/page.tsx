@@ -3,9 +3,8 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { FormCard } from "@/components/dashboard/form-card"
 import { EmptyState } from "@/components/dashboard/empty-state"
-import { AiFormBuilder } from "@/components/dashboard/ai-form-builder"
+import { DashboardContent } from "@/components/dashboard/dashboard-content"
 import { AppHeader } from "@/components/layout/amarel-nav"
 import { createClient } from "@/lib/supabase/server"
 import { rowToForm } from "@/lib/types"
@@ -86,18 +85,8 @@ export default async function DashboardPage() {
         {formsWithCounts.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {formsWithCounts.map(
-              ({ form, responseCount }: { form: ReturnType<typeof rowToForm>; responseCount: number }) => (
-                <FormCard key={form.id} form={form} responseCount={responseCount} />
-              )
-            )}
-          </div>
+          <DashboardContent formsWithCounts={formsWithCounts} />
         )}
-
-        <div className="mt-8">
-          <AiFormBuilder />
-        </div>
       </main>
     </div>
   )

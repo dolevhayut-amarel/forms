@@ -186,6 +186,7 @@ export interface Form {
   schema: FormSchema
   form_type: FormType
   is_published: boolean
+  folder: string | null
   created_at: string
   updated_at: string
 }
@@ -262,6 +263,7 @@ export type Database = {
           schema: Json
           form_type: string
           is_published: boolean
+          folder: string | null
           created_at: string
           updated_at: string
         }
@@ -275,6 +277,7 @@ export type Database = {
           schema?: Json
           form_type?: string
           is_published?: boolean
+          folder?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -288,6 +291,7 @@ export type Database = {
           schema?: Json
           form_type?: string
           is_published?: boolean
+          folder?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -344,6 +348,7 @@ export function rowToForm(row: any): Form {
     schema: (row.schema as unknown as FormSchema) ?? {},
     form_type: (row.form_type ?? "general") as FormType,
     is_published: row.is_published ?? false,
+    folder: row.folder ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,
   }

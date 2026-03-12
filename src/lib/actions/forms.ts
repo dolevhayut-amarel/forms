@@ -57,6 +57,7 @@ export async function updateForm(
     schema?: FormSchema
     form_type?: FormType
     is_published?: boolean
+    folder?: string | null
   }
 ): Promise<{ form?: Form; error?: string }> {
   const supabase = await createClient()

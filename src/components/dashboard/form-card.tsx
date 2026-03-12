@@ -16,6 +16,8 @@ import {
   Inbox,
   Share2,
   QrCode,
+  FolderOpen,
+  FolderInput,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -43,6 +45,7 @@ import type { Form, FormResponse } from "@/lib/types"
 interface FormCardProps {
   form: Form
   responseCount: number
+  allFolders?: string[]
 }
 
 function stripHtml(html: string): string {
@@ -57,7 +60,7 @@ function stripHtml(html: string): string {
     .trim()
 }
 
-export function FormCard({ form, responseCount }: FormCardProps) {
+export function FormCard({ form, responseCount, allFolders = [] }: FormCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [toggling, setToggling] = useState(false)
@@ -65,6 +68,8 @@ export function FormCard({ form, responseCount }: FormCardProps) {
   const [submissions, setSubmissions] = useState<FormResponse[]>([])
   const [loadingSubmissions, setLoadingSubmissions] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  const [folderOpen, setFolderOpen] = useState(false)
+  const [movingFolder, setMovingFolder] = useState(false)
 
   async function handleDelete() {
     setDeleting(true)
@@ -205,6 +210,13 @@ export function FormCard({ form, responseCount }: FormCardProps) {
                   </>
                 )}
               </DropdownMenuItem>
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() => setFolderOpen(true)}
+              >
+                <FolderInput className="h-3.5 w-3.5" />
+                העבר לתיקיה
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-destructive flex items-center gap-2"
@@ -255,6 +267,12 @@ export function FormCard({ form, responseCount }: FormCardProps) {
             >
               {form.is_published ? "מפורסם" : "טיוטה"}
             </Badge>
+            {form.folder && (
+              <Badge variant="outline" className="text-xs rounded-lg text-neutral-500 border-neutral-200">
+                <FolderOpen className="h-2.5 w-2.5 me-1" />
+                {form.folder}
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -367,6 +385,63 @@ export function FormCard({ form, responseCount }: FormCardProps) {
               </Link>
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Move to folder dialog */}
+      <Dialog open={folderOpen} onOpenChange={setFolderOpen}>
+        <DialogContent className="rounded-2xl max-w-xs">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <FolderInput className="h-4.5 w-4.5 text-neutral-600" />
+              העבר לתיקיה
+            </DialogTitle>
+            <DialogDescription>
+              בחר תיקיה עבור &quot;{form.name}&quot;
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5 max-h-52 overflow-y-auto">
+            <button
+              type="button"
+              disabled={movingFolder}
+              onClick={async () => {
+                setMovingFolder(true)
+                await updateForm(form.id, { folder: null } as Parameters<typeof updateForm>[1])
+                setFolderOpen(false)
+                setMovingFolder(false)
+                toast.success("הטופס הועבר")
+              }}
+              className={`w-full text-start px-3 py-2.5 rounded-xl text-sm transition-colors ${
+                !form.folder
+                  ? "bg-neutral-800 text-white"
+                  : "hover:bg-neutral-50 text-neutral-600"
+              }`}
+            >
+              ללא תיקיה
+            </button>
+            {allFolders.map((f) => (
+              <button
+                key={f}
+                type="button"
+                disabled={movingFolder}
+                onClick={async () => {
+                  setMovingFolder(true)
+                  await updateForm(form.id, { folder: f } as Parameters<typeof updateForm>[1])
+                  setFolderOpen(false)
+                  setMovingFolder(false)
+                  toast.success(`הטופס הועבר ל"${f}"`)
+                }}
+                className={`w-full text-start px-3 py-2.5 rounded-xl text-sm flex items-center gap-2 transition-colors ${
+                  form.folder === f
+                    ? "bg-neutral-800 text-white"
+                    : "hover:bg-neutral-50 text-neutral-600"
+                }`}
+              >
+                <FolderOpen className="h-3.5 w-3.5 shrink-0" />
+                {f}
+              </button>
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
     </>
