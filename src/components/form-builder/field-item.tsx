@@ -23,6 +23,7 @@ import {
   Circle,
   MapPin,
   Layers,
+  Search,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { isLayoutField, type FieldConfig } from "@/lib/types"
@@ -47,6 +48,7 @@ const TYPE_ICON: Record<FieldConfig["type"], React.ReactNode> = {
   image:        <ImageIcon className="h-3.5 w-3.5" />,
   link:         <Link2 className="h-3.5 w-3.5" />,
   section:      <Layers className="h-3.5 w-3.5" />,
+  dataset_lookup: <Search className="h-3.5 w-3.5" />,
 }
 
 const TYPE_LABEL: Record<FieldConfig["type"], string> = {
@@ -69,6 +71,7 @@ const TYPE_LABEL: Record<FieldConfig["type"], string> = {
   image:        "תמונה",
   link:         "לינק",
   section:      "סקשן",
+  dataset_lookup: "תצוגת מאגר",
 }
 
 interface FieldItemProps {

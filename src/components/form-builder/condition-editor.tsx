@@ -16,6 +16,7 @@ import {
   type FieldCondition,
   type ConditionRule,
   type ConditionOperator,
+  type FormDataset,
 } from "@/lib/types"
 import {
   getConditionSources,
@@ -29,6 +30,7 @@ interface ConditionEditorProps {
   field: FieldConfig
   allFields: FieldConfig[]
   onChange: (conditions: FieldCondition | undefined) => void
+  datasets?: FormDataset[]
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -47,14 +49,48 @@ function RuleValueInput({
   rule,
   sourceField,
   onChange,
+  datasets,
 }: {
   rule: ConditionRule
   sourceField: FieldConfig | undefined
   onChange: (value: string) => void
+  datasets?: FormDataset[]
 }) {
   const meta = OPERATOR_META[rule.operator]
   if (!meta.hasValueInput) return null
   if (!sourceField) return null
+
+  // When comparing a dataset column, show unique values from that column
+  if (rule.dataset_column && sourceField.data_source && datasets) {
+    const ds = datasets.find((d) => d.id === sourceField.data_source!.dataset_id)
+    if (ds) {
+      const uniqueVals = [...new Set(
+        ds.rows.map((r) => String(r[rule.dataset_column!] ?? "")).filter(Boolean)
+      )]
+      if (uniqueVals.length > 0) {
+        return (
+          <Select value={rule.value ?? ""} onValueChange={onChange} dir="rtl">
+            <SelectTrigger className="h-8 rounded-lg text-xs flex-1 min-w-0">
+              <SelectValue placeholder="בחר ערך…" />
+            </SelectTrigger>
+            <SelectContent dir="rtl">
+              {uniqueVals.map((v) => (
+                <SelectItem key={v} value={v} className="text-xs">{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )
+      }
+      return (
+        <Input
+          value={rule.value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="ערך…"
+          className="h-8 rounded-lg text-xs flex-1 min-w-0"
+        />
+      )
+    }
+  }
 
   // Dropdown / radio / multiselect → select from options
   if (
@@ -167,7 +203,7 @@ function RuleValueInput({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function ConditionEditor({ field, allFields, onChange }: ConditionEditorProps) {
+export function ConditionEditor({ field, allFields, onChange, datasets = [] }: ConditionEditorProps) {
   const sources = getConditionSources(field.id, allFields)
   const cond = field.conditions
 
@@ -196,7 +232,7 @@ export function ConditionEditor({ field, allFields, onChange }: ConditionEditorP
       : "equals"
     const newRules = cond.rules.map((r, i) =>
       i === index
-        ? { fieldId: newFieldId, operator: defaultOperator, value: undefined }
+        ? { fieldId: newFieldId, operator: defaultOperator, value: undefined, dataset_column: undefined }
         : r
     )
     onChange({ ...cond, rules: newRules })
@@ -348,12 +384,43 @@ export function ConditionEditor({ field, allFields, onChange }: ConditionEditorP
                 </Select>
               )}
 
+              {/* Dataset column selector — when source has data_source */}
+              {sourceField && sourceField.data_source && datasets.length > 0 && (() => {
+                const ds = datasets.find((d) => d.id === sourceField.data_source!.dataset_id)
+                if (!ds || ds.columns.length === 0) return null
+                return (
+                  <Select
+                    value={rule.dataset_column ?? "__direct__"}
+                    onValueChange={(v) =>
+                      updateRule(i, {
+                        dataset_column: v === "__direct__" ? undefined : v,
+                        value: undefined,
+                      })
+                    }
+                    dir="rtl"
+                  >
+                    <SelectTrigger className="h-8 rounded-lg text-xs w-28 shrink-0 bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent dir="rtl">
+                      <SelectItem value="__direct__" className="text-xs">ערך ישיר</SelectItem>
+                      {ds.columns.map((col) => (
+                        <SelectItem key={col.id} value={col.id} className="text-xs">
+                          {col.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )
+              })()}
+
               {/* Value input — context-sensitive */}
               {sourceField && (
                 <RuleValueInput
                   rule={rule}
                   sourceField={sourceField}
                   onChange={(v) => updateRule(i, { value: v })}
+                  datasets={datasets}
                 />
               )}
 

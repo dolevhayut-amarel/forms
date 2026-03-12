@@ -16,7 +16,7 @@ export type InputFieldType =
   | "signature"
 
 /** Layout/visual fields — display only, no answer collected */
-export type LayoutFieldType = "heading" | "subheading" | "paragraph" | "divider" | "image" | "link" | "section"
+export type LayoutFieldType = "heading" | "subheading" | "paragraph" | "divider" | "image" | "link" | "section" | "dataset_lookup"
 
 export type FieldType = InputFieldType | LayoutFieldType
 
@@ -28,6 +28,7 @@ export const LAYOUT_FIELD_TYPES: LayoutFieldType[] = [
   "image",
   "link",
   "section",
+  "dataset_lookup",
 ]
 
 export function isLayoutField(type: FieldType): type is LayoutFieldType {
@@ -52,6 +53,7 @@ export interface ConditionRule {
   fieldId: string
   operator: ConditionOperator
   value?: string          // omitted for is_empty / is_not_empty
+  dataset_column?: string // compare this dataset column instead of the raw field value
 }
 
 export interface FieldCondition {
@@ -104,6 +106,9 @@ export interface FieldConfig {
     label_column: string
     value_column: string
   }
+  lookup_field_id?: string     // dataset_lookup: which field's value to watch
+  lookup_dataset_id?: string   // dataset_lookup: which dataset to search
+  lookup_column_id?: string    // dataset_lookup: which column value to display
 }
 
 // ─── Form types ───────────────────────────────────────────────────────────────

@@ -136,15 +136,17 @@ export function FormRenderer({ form }: FormRendererProps) {
   // Track whether memory is active so we can show the indicator reactively
   const [memoryActive, setMemoryActive] = useState(() => hasActiveMemory(form.id))
 
+  const datasets = form.schema?.datasets as FormDataset[] | undefined
+
   // Reactive visibility — recomputed whenever any value changes (section-aware)
   const visibleFieldIds = useMemo(
     () =>
       new Set(
         form.fields
-          .filter((f) => isFieldVisibleWithSections(f, form.fields, values))
+          .filter((f) => isFieldVisibleWithSections(f, form.fields, values, datasets))
           .map((f) => f.id)
       ),
-    [form.fields, values]
+    [form.fields, values, datasets]
   )
 
   const submitButtonLabel =
@@ -311,7 +313,8 @@ export function FormRenderer({ form }: FormRendererProps) {
                   value={isLayoutField(field.type) ? "" : values[field.id]}
                   error={errors[field.id]}
                   onChange={(val) => setValue(field.id, val)}
-                  datasets={form.schema?.datasets as FormDataset[] | undefined}
+                  datasets={datasets}
+                  allValues={values}
                 />
               </div>
             ))}
@@ -382,6 +385,61 @@ export function FormRenderer({ form }: FormRendererProps) {
   )
 }
 
+// ─── Dataset lookup element ───────────────────────────────────────────────────
+
+function DatasetLookupElement({
+  field,
+  datasets,
+  allValues,
+}: {
+  field: FieldConfig
+  datasets?: FormDataset[]
+  allValues?: FormValues
+}) {
+  const sourceFieldId = field.lookup_field_id
+  const datasetId = field.lookup_dataset_id
+  const columnId = field.lookup_column_id
+
+  if (!sourceFieldId || !datasetId || !columnId || !datasets || !allValues) {
+    return null
+  }
+
+  const selectedValue = allValues[sourceFieldId]
+  if (!selectedValue || (Array.isArray(selectedValue) && selectedValue.length === 0)) {
+    return null
+  }
+
+  const ds = datasets.find((d) => d.id === datasetId)
+  if (!ds) return null
+
+  const labelVal = Array.isArray(selectedValue) ? selectedValue[0] : selectedValue
+
+  // Match the dataset row by any column containing the selected value
+  const row = ds.rows.find((r) =>
+    ds.columns.some((c) => String(r[c.id] ?? "") === labelVal)
+  )
+
+  if (!row) return null
+
+  const displayValue = String(row[columnId] ?? "")
+  if (!displayValue) return null
+
+  const displayCol = ds.columns.find((c) => c.id === columnId)
+
+  return (
+    <div className="rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium text-cyan-800">
+          {field.label || displayCol?.name || "תצוגת מאגר"}
+        </span>
+        <span className="text-sm font-bold text-cyan-900">
+          {displayValue}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 // ─── Field renderer ───────────────────────────────────────────────────────────
 
 function FieldRenderer({
@@ -390,12 +448,14 @@ function FieldRenderer({
   error,
   onChange,
   datasets,
+  allValues,
 }: {
   field: FieldConfig
   value: string | string[]
   error?: string
   onChange: (val: string | string[]) => void
   datasets?: FormDataset[]
+  allValues?: FormValues
 }) {
   // Layout / visual elements
   if (field.type === "heading")    return <HeadingElement field={field} />
@@ -405,6 +465,7 @@ function FieldRenderer({
   if (field.type === "image")      return <ImageElement field={field} />
   if (field.type === "link")       return <LinkElement field={field} />
   if (field.type === "section")    return <SectionElement field={field} />
+  if (field.type === "dataset_lookup") return <DatasetLookupElement field={field} datasets={datasets} allValues={allValues} />
 
   // Input fields
   if (field.type === "text") {

@@ -50,6 +50,7 @@ const TYPE_LABEL: Record<FieldConfig["type"], string> = {
   image: "תמונה",
   link: "לינק",
   section: "סקשן",
+  dataset_lookup: "תצוגת מאגר",
 }
 
 interface FieldEditorPanelProps {
@@ -455,6 +456,7 @@ export function FieldEditorPanel({ field, onChange, allFields, datasets = [] }: 
             field={field}
             allFields={allFields}
             onChange={(conditions) => update({ conditions })}
+            datasets={datasets}
           />
         </>
       )}
@@ -483,7 +485,89 @@ export function FieldEditorPanel({ field, onChange, allFields, datasets = [] }: 
             field={field}
             allFields={allFields}
             onChange={(conditions) => update({ conditions })}
+            datasets={datasets}
           />
+        </>
+      )}
+
+      {field.type === "dataset_lookup" && (
+        <>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+              תווית
+            </Label>
+            <Input
+              value={field.label}
+              onChange={(e) => update({ label: e.target.value })}
+              placeholder="לדוגמה: מצב מלאי"
+              className="h-9 rounded-xl text-sm"
+            />
+          </div>
+
+          {datasets.length === 0 ? (
+            <div className="bg-amber-50 rounded-xl border border-amber-200 p-3">
+              <p className="text-xs text-amber-600">
+                אין מאגרי מידע. צור מאגר בהגדרות הטופס כדי להשתמש בתצוגת מאגר.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3 rounded-xl border border-neutral-200 p-3 bg-neutral-50/50">
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-neutral-500">שדה מקור (לפי בחירת המשיב)</Label>
+                <Select
+                  value={field.lookup_field_id ?? "__none__"}
+                  onValueChange={(v) => {
+                    const srcField = allFields.find((f) => f.id === v)
+                    update({
+                      lookup_field_id: v === "__none__" ? undefined : v,
+                      lookup_dataset_id: srcField?.data_source?.dataset_id,
+                      lookup_column_id: undefined,
+                    })
+                  }}
+                  dir="rtl"
+                >
+                  <SelectTrigger className="h-8 rounded-lg text-xs"><SelectValue placeholder="בחר שדה…" /></SelectTrigger>
+                  <SelectContent dir="rtl">
+                    <SelectItem value="__none__" className="text-xs text-neutral-400 italic">בחר שדה…</SelectItem>
+                    {allFields
+                      .filter((f) => f.data_source && f.id !== field.id)
+                      .map((f) => (
+                        <SelectItem key={f.id} value={f.id} className="text-xs">{f.label || f.id}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {field.lookup_dataset_id && (() => {
+                const ds = datasets.find((d) => d.id === field.lookup_dataset_id)
+                if (!ds || ds.columns.length === 0) return <p className="text-xs text-amber-600">למאגר אין עמודות.</p>
+                return (
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] text-neutral-500">עמודת תצוגה</Label>
+                    <Select
+                      value={field.lookup_column_id ?? "__none__"}
+                      onValueChange={(v) => update({ lookup_column_id: v === "__none__" ? undefined : v })}
+                      dir="rtl"
+                    >
+                      <SelectTrigger className="h-8 rounded-lg text-xs"><SelectValue placeholder="בחר עמודה…" /></SelectTrigger>
+                      <SelectContent dir="rtl">
+                        <SelectItem value="__none__" className="text-xs text-neutral-400 italic">בחר עמודה…</SelectItem>
+                        {ds.columns.map((c) => (
+                          <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )
+              })()}
+
+              <div className="bg-blue-50 rounded-lg p-2.5 border border-blue-200">
+                <p className="text-[11px] text-blue-600">
+                  כשהמשיב יבחר ערך בשדה המקור, הערך מעמודת התצוגה יוצג אוטומטית.
+                </p>
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -1081,6 +1165,7 @@ export function FieldEditorPanel({ field, onChange, allFields, datasets = [] }: 
             field={field}
             allFields={allFields}
             onChange={(conditions) => update({ conditions })}
+            datasets={datasets}
           />
         </>
       )}

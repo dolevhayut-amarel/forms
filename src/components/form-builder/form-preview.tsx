@@ -17,6 +17,7 @@ import {
   Circle,
   MapPin,
   Layers,
+  Search,
 } from "lucide-react"
 import { isLayoutField, type FieldConfig } from "@/lib/types"
 
@@ -216,6 +217,20 @@ function PreviewField({ field }: { field: FieldConfig }) {
     )
   }
 
+  if (field.type === "dataset_lookup") {
+    return (
+      <div className="rounded-xl border-2 border-dashed border-cyan-300 bg-cyan-50/50 px-4 py-3 flex items-center gap-2">
+        <Search className="h-4 w-4 text-cyan-600 shrink-0" />
+        <span className="text-sm font-semibold text-cyan-700">
+          {field.label || <span className="text-cyan-300">תצוגת מאגר</span>}
+        </span>
+        <span className="text-[10px] bg-cyan-100 text-cyan-600 rounded-md px-1.5 py-0.5 font-medium ms-auto">
+          VLOOKUP
+        </span>
+      </div>
+    )
+  }
+
   // Input fields
   return (
     <div className="space-y-1.5 p-1">
@@ -253,6 +268,7 @@ function FieldTypeIcon({ type }: { type: FieldConfig["type"] }) {
   if (type === "divider") return <Minus className={cls} />
   if (type === "image") return <ImageIcon className={cls} />
   if (type === "link") return <Link2 className={cls} />
+  if (type === "dataset_lookup") return <Search className={cls} />
   return null
 }
 

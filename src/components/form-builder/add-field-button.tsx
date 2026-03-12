@@ -20,6 +20,7 @@ import {
   Circle,
   MapPin,
   Layers,
+  Search,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -159,6 +160,12 @@ const LAYOUT_FIELD_TYPES: {
     label: "סקשן",
     icon: <Layers className="h-4 w-4" />,
     description: "קיבוץ שדות עם תנאי הצגה",
+  },
+  {
+    type: "dataset_lookup",
+    label: "תצוגת מאגר",
+    icon: <Search className="h-4 w-4" />,
+    description: "הצגת ערך ממאגר מידע לפי בחירה",
   },
 ]
 

@@ -4,6 +4,7 @@ import type {
   ConditionRule,
   ConditionOperator,
   InputFieldType,
+  FormDataset,
 } from "./types"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -52,22 +53,65 @@ export const OPERATORS_BY_TYPE: Partial<Record<InputFieldType, ConditionOperator
  */
 export function isFieldVisible(
   field: FieldConfig,
-  values: FormValues
+  values: FormValues,
+  allFields?: FieldConfig[],
+  datasets?: FormDataset[]
 ): boolean {
   if (!field.conditions || field.conditions.rules.length === 0) return true
-  return evaluateCondition(field.conditions, values)
+  return evaluateCondition(field.conditions, values, allFields, datasets)
 }
 
-function evaluateCondition(cond: FieldCondition, values: FormValues): boolean {
+function evaluateCondition(
+  cond: FieldCondition,
+  values: FormValues,
+  allFields?: FieldConfig[],
+  datasets?: FormDataset[]
+): boolean {
   if (cond.rules.length === 0) return true
-  const results = cond.rules.map((r) => evaluateRule(r, values))
+  const results = cond.rules.map((r) => evaluateRule(r, values, allFields, datasets))
   return cond.match === "all"
     ? results.every(Boolean)
     : results.some(Boolean)
 }
 
-function evaluateRule(rule: ConditionRule, values: FormValues): boolean {
-  const val = values[rule.fieldId]
+/**
+ * Resolve the effective value to compare for a condition rule.
+ * If dataset_column is set, look up the dataset row by the field's selected
+ * label value, then return the requested column's value from that row.
+ */
+function resolveRuleValue(
+  rule: ConditionRule,
+  values: FormValues,
+  allFields?: FieldConfig[],
+  datasets?: FormDataset[]
+): string | string[] | undefined {
+  const rawVal = values[rule.fieldId]
+  if (!rule.dataset_column || !allFields || !datasets) return rawVal
+
+  const sourceField = allFields.find((f) => f.id === rule.fieldId)
+  if (!sourceField?.data_source) return rawVal
+
+  const ds = datasets.find((d) => d.id === sourceField.data_source!.dataset_id)
+  if (!ds) return rawVal
+
+  const selectedLabel = Array.isArray(rawVal) ? rawVal[0] : rawVal
+  if (!selectedLabel) return undefined
+
+  const row = ds.rows.find(
+    (r) => String(r[sourceField.data_source!.label_column] ?? "") === selectedLabel
+  )
+  if (!row) return undefined
+
+  return String(row[rule.dataset_column] ?? "")
+}
+
+function evaluateRule(
+  rule: ConditionRule,
+  values: FormValues,
+  allFields?: FieldConfig[],
+  datasets?: FormDataset[]
+): boolean {
+  const val = resolveRuleValue(rule, values, allFields, datasets)
   const isEmpty =
     val === undefined ||
     val === "" ||
@@ -116,20 +160,21 @@ function evaluateRule(rule: ConditionRule, values: FormValues): boolean {
 export function isFieldVisibleWithSections(
   field: FieldConfig,
   allFields: FieldConfig[],
-  values: FormValues
+  values: FormValues,
+  datasets?: FormDataset[]
 ): boolean {
   const idx = allFields.indexOf(field)
-  if (idx === -1) return isFieldVisible(field, values)
+  if (idx === -1) return isFieldVisible(field, values, allFields, datasets)
 
   // Walk backwards to find the closest preceding section
   for (let i = idx - 1; i >= 0; i--) {
     if (allFields[i].type === "section") {
-      if (!isFieldVisible(allFields[i], values)) return false
+      if (!isFieldVisible(allFields[i], values, allFields, datasets)) return false
       break
     }
   }
 
-  return isFieldVisible(field, values)
+  return isFieldVisible(field, values, allFields, datasets)
 }
 
 /**
