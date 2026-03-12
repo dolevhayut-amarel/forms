@@ -142,9 +142,17 @@ function PreviewField({ field }: { field: FieldConfig }) {
 
   if (field.type === "paragraph") {
     const text = field.content ?? field.label
+    const styleMap: Record<string, string> = {
+      default: "",
+      info: "rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-blue-800",
+      success: "rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800",
+      warning: "rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800",
+      danger: "rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-red-800",
+    }
+    const cls = styleMap[field.paragraph_style ?? "default"] ?? ""
     return (
-      <div className="px-2 py-1">
-        <p className="text-sm text-neutral-600 leading-relaxed whitespace-pre-wrap">
+      <div className={cls || "px-2 py-1"}>
+        <p className={`text-sm leading-relaxed whitespace-pre-wrap ${cls ? "" : "text-neutral-600"}`}>
           {text || <span className="text-neutral-300">פסקת טקסט</span>}
         </p>
       </div>

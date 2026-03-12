@@ -25,25 +25,39 @@ export function SubheadingElement({ field }: LayoutElementProps) {
   )
 }
 
+const PARAGRAPH_STYLES: Record<string, { wrapper: string; text: string }> = {
+  default: { wrapper: "", text: "text-neutral-600" },
+  info:    { wrapper: "rounded-xl border border-blue-200 bg-blue-50 px-4 py-3", text: "text-blue-800" },
+  success: { wrapper: "rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3", text: "text-emerald-800" },
+  warning: { wrapper: "rounded-xl border border-amber-200 bg-amber-50 px-4 py-3", text: "text-amber-800" },
+  danger:  { wrapper: "rounded-xl border border-red-200 bg-red-50 px-4 py-3", text: "text-red-800" },
+}
+
 export function ParagraphElement({ field }: LayoutElementProps) {
   const content = field.content ?? field.label
   if (!content) return null
 
+  const style = PARAGRAPH_STYLES[field.paragraph_style ?? "default"] ?? PARAGRAPH_STYLES.default
   const isHtml = content.trimStart().startsWith("<")
+
   if (isHtml) {
     return (
-      <div
-        className="rich-text text-base text-neutral-600 leading-relaxed"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: content is sanitized TipTap HTML output
-        dangerouslySetInnerHTML={{ __html: content }}
-      />
+      <div className={style.wrapper}>
+        <div
+          className={`rich-text text-base leading-relaxed ${style.text}`}
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: content is sanitized TipTap HTML output
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+      </div>
     )
   }
 
   return (
-    <p className="text-base text-neutral-600 leading-relaxed whitespace-pre-wrap">
-      {content}
-    </p>
+    <div className={style.wrapper}>
+      <p className={`text-base leading-relaxed whitespace-pre-wrap ${style.text}`}>
+        {content}
+      </p>
+    </div>
   )
 }
 

@@ -193,15 +193,44 @@ export function FieldEditorPanel({ field, onChange, allFields, datasets = [] }: 
       )}
 
       {field.type === "paragraph" && (
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
-            תוכן הפסקה
-          </Label>
-          <RichTextEditor
-            value={field.content ?? ""}
-            onChange={(html) => update({ content: html })}
-            placeholder="הכנס את תוכן הפסקה כאן…"
-          />
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+              תוכן הפסקה
+            </Label>
+            <RichTextEditor
+              value={field.content ?? ""}
+              onChange={(html) => update({ content: html })}
+              placeholder="הכנס את תוכן הפסקה כאן…"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide">
+              סגנון
+            </Label>
+            <div className="grid grid-cols-5 gap-1">
+              {([
+                { value: "default", label: "רגיל", cls: "border-neutral-200 text-neutral-600" },
+                { value: "info", label: "מידע", cls: "border-blue-300 bg-blue-50 text-blue-700" },
+                { value: "success", label: "חיובי", cls: "border-emerald-300 bg-emerald-50 text-emerald-700" },
+                { value: "warning", label: "אזהרה", cls: "border-amber-300 bg-amber-50 text-amber-700" },
+                { value: "danger", label: "שלילי", cls: "border-red-300 bg-red-50 text-red-700" },
+              ] as const).map((s) => (
+                <button
+                  key={s.value}
+                  type="button"
+                  onClick={() => update({ paragraph_style: s.value === "default" ? undefined : s.value })}
+                  className={`py-1.5 rounded-lg border text-[10px] font-semibold transition-all ${s.cls} ${
+                    (field.paragraph_style ?? "default") === s.value
+                      ? "ring-2 ring-neutral-900 ring-offset-1"
+                      : "opacity-70 hover:opacity-100"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

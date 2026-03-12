@@ -96,6 +96,7 @@ export interface FieldConfig {
   max?: number                    // number field: maximum value
   step?: number                   // number field: step increment
   content?: string                // paragraph body text; image URL alternative
+  paragraph_style?: "default" | "info" | "success" | "warning" | "danger"
   validation?: FieldValidation    // text field validation rule
   date_mode?: "date" | "datetime" // date field: date-only or datetime
   conditions?: FieldCondition     // visibility rules — shown when conditions met
