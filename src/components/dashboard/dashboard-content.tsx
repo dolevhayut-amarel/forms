@@ -12,14 +12,16 @@ interface DashboardContentProps {
 
 export function DashboardContent({ formsWithCounts }: DashboardContentProps) {
   const [activeFolder, setActiveFolder] = useState<string | null>(null)
+  const [manualFolders, setManualFolders] = useState<string[]>([])
 
   const folders = useMemo(() => {
     const set = new Set<string>()
     formsWithCounts.forEach(({ form }) => {
       if (form.folder) set.add(form.folder)
     })
+    manualFolders.forEach((f) => set.add(f))
     return [...set].sort()
-  }, [formsWithCounts])
+  }, [formsWithCounts, manualFolders])
 
   const filtered = useMemo(() => {
     if (activeFolder === null) return formsWithCounts
@@ -28,6 +30,7 @@ export function DashboardContent({ formsWithCounts }: DashboardContentProps) {
   }, [formsWithCounts, activeFolder])
 
   function handleCreateFolder(name: string) {
+    setManualFolders((prev) => prev.includes(name) ? prev : [...prev, name])
     setActiveFolder(name)
   }
 

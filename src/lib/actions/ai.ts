@@ -447,7 +447,7 @@ export async function computeAIField(input: {
         },
         { role: "user", content: resolvedPrompt },
       ],
-      max_tokens: 1024,
+      max_completion_tokens: 1024,
     })
 
     const text = completion.choices[0]?.message?.content?.trim()
