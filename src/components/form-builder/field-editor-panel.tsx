@@ -231,6 +231,13 @@ export function FieldEditorPanel({ field, onChange, allFields, datasets = [] }: 
               ))}
             </div>
           </div>
+          <Separator />
+          <ConditionEditor
+            field={field}
+            allFields={allFields}
+            onChange={(conditions) => update({ conditions })}
+            datasets={datasets}
+          />
         </div>
       )}
 
