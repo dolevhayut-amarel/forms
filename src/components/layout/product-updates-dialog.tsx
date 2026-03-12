@@ -1,0 +1,92 @@
+"use client"
+
+import { useState } from "react"
+import { Megaphone } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+
+// עדכוני מוצר מבוססי git history (7 ימים אחורה) — מנוסחים למשתמש
+const PRODUCT_UPDATES: { date: string; title: string; items: string[] }[] = [
+  {
+    date: "13 במרץ 2026",
+    title: "AI, תיקיות וממשק",
+    items: [
+      "שדה חישוב AI — שדה חדש שמחשב תשובה לפי שאר השדות, עם תמיכה במארקדאון",
+      "מודלי AI מעודכנים — GPT-5.4 ליצירה ועריכה, GPT-5-nano לחישוב שדות",
+      "תיקיות בטפסים — יצירת תיקיות, העברת טפסים בין תיקיות וניהול ידני מהדשבורד",
+      "משתנים ב-URL — מילוי אוטומטי של שדות לפי פרמטרים בקישור (prefill)",
+      "עורך תנאים משופר — לוגיקה מותנית בשדות עם חוויית משתמש מעודכנת",
+      "סגנונות פסקאות — אפשרות לבחור סגנון (ברירת מחדל, מידע, הצלחה, אזהרה, סכנה)",
+    ],
+  },
+  {
+    date: "12 במרץ 2026",
+    title: "מערך אישורים, datasets ושדות",
+    items: [
+      "מערך אישורים — אפשרות לאשר/לדחות תגובות ישירות מתוך דף התוצאות והכרטיס",
+      "Webhooks לאישורים — התראות על אירועי אישור/דחייה לשילוב עם מערכות חיצוניות",
+      "חיבור ל-datasets — שדות עם מקור נתונים (dropdown/multiselect) מטבלאות במערכת",
+      "סוגי שדות חדשים — הרחבה של סוגי השדות ובונה הטפסים",
+    ],
+  },
+  {
+    date: "10 במרץ 2026",
+    title: "אנליטיקס",
+    items: [
+      "דף אנליטיקס — גרף עמודות הוחלף בלוח מובילים (leaderboard) קריא יותר",
+      "שיפור תגובתיות דיאלוגים בממשק",
+    ],
+  },
+]
+
+export function ProductUpdatesDialog() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        title="עדכוני מוצר"
+        aria-label="עדכוני מוצר"
+        className="flex items-center justify-center h-8 w-8 rounded-xl transition-colors min-w-[44px] min-h-[44px] text-white/60 hover:text-white hover:bg-white/10"
+      >
+        <Megaphone className="h-4 w-4" aria-hidden />
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Megaphone className="h-5 w-5 text-violet-500" />
+              עדכוני מוצר
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto space-y-6 pr-1 -mr-1">
+            {PRODUCT_UPDATES.map((section) => (
+              <section key={section.date}>
+                <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-2">
+                  {section.date}
+                </p>
+                <h3 className="text-sm font-semibold text-neutral-800 mb-2">
+                  {section.title}
+                </h3>
+                <ul className="space-y-1.5 text-sm text-neutral-700">
+                  {section.items.map((item, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-violet-400 shrink-0">•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}

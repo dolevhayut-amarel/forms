@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Plus, LayoutGrid, BarChart3, UserCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NotificationBell } from "@/components/notifications/notification-bell"
+import { ProductUpdatesDialog } from "./product-updates-dialog"
 import { SignOutButton } from "./sign-out-button"
 
 // Nav color constants — use directly in className to avoid CSS-variable issues with Tailwind v4
@@ -97,6 +98,9 @@ export function AppHeader({ userId, userEmail, activePath, hasSubBar }: AppHeade
               טופס חדש
             </Link>
           </Button>
+
+          {/* Product updates (megaphone) */}
+          <ProductUpdatesDialog />
 
           {/* Notification bell */}
           <NotificationBell userId={userId} />
