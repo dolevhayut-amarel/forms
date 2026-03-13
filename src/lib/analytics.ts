@@ -48,10 +48,14 @@ export interface TimeSeriesPoint {
 
 export function buildTimeSeries(
   responses: FormResponse[],
-  days: number
+  days: number,
+  formId?: string
 ): TimeSeriesPoint[] {
   const now = new Date()
   const points: TimeSeriesPoint[] = []
+  const filtered = formId
+    ? responses.filter((r) => r.form_id === formId)
+    : responses
 
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(now)
@@ -60,7 +64,7 @@ export function buildTimeSeries(
     const next = new Date(d)
     next.setDate(d.getDate() + 1)
 
-    const count = responses.filter((r) => {
+    const count = filtered.filter((r) => {
       const t = new Date(r.submitted_at)
       return t >= d && t < next
     }).length

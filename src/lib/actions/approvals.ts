@@ -1,37 +1,10 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { fireWebhooks } from "@/lib/actions/webhooks"
 import type { FieldConfig, FormSettings, ResponseApproval } from "@/lib/types"
 
-const APPROVAL_WEBHOOK_URL = "https://hook.eu1.make.com/3dc68drtg0nttai6qlggl6agt8bm8fqe"
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://forms-cyan-theta.vercel.app/"
-
-async function notifyApproverViaWebhook(payload: {
-  event: "approval_requested" | "next_step_requested" | "approval_completed"
-  approve_url?: string
-  token?: string
-  form_name: string
-  form_id: string
-  response_id: string
-  approval_id: string
-  step_index: number
-  total_steps: number
-  approver_name: string
-  approver_channel: "email" | "whatsapp"
-  approver_target: string
-  response_data?: Record<string, string | string[]>
-  final_status?: string
-}): Promise<void> {
-  try {
-    await fetch(APPROVAL_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-  } catch {
-    // fire-and-forget — webhook failure should not block the approval flow
-  }
-}
 
 export type ApprovalTokenView = {
   response_approval_id: string
@@ -80,12 +53,12 @@ export async function initializeApprovalForResponse(responseId: string): Promise
       })
 
       if (ctx && ctx.found) {
-        await notifyApproverViaWebhook({
-          event: "approval_requested",
+        const formId = (ctx.form_id ?? "") as string
+        await fireWebhooks(formId, "approval_requested", {
           approve_url: `${SITE_URL}/approve/${firstToken}`,
           token: firstToken,
           form_name: ctx.form_name ?? "",
-          form_id: ctx.form_id ?? "",
+          form_id: formId,
           response_id: responseId,
           approval_id: approvalId,
           step_index: 0,
@@ -165,13 +138,14 @@ export async function decideApprovalByToken(params: {
     })
 
     if (ctx && typeof ctx === "object") {
+      const formId = (ctx.form_id ?? "") as string
+
       if (resultStatus === "in_progress" && data.next_token && ctx.next_approver_name) {
-        await notifyApproverViaWebhook({
-          event: "next_step_requested",
+        await fireWebhooks(formId, "next_step_requested", {
           approve_url: `${SITE_URL}/approve/${data.next_token as string}`,
           token: data.next_token as string,
           form_name: ctx.form_name ?? "",
-          form_id: ctx.form_id ?? "",
+          form_id: formId,
           response_id: ctx.response_id ?? "",
           approval_id: ctx.approval_id ?? "",
           step_index: (data.next_step_index as number) ?? 0,
@@ -184,17 +158,11 @@ export async function decideApprovalByToken(params: {
       }
 
       if (resultStatus === "approved" || resultStatus === "rejected") {
-        await notifyApproverViaWebhook({
-          event: "approval_completed",
+        await fireWebhooks(formId, "approval_completed", {
           form_name: ctx.form_name ?? "",
-          form_id: ctx.form_id ?? "",
+          form_id: formId,
           response_id: ctx.response_id ?? "",
           approval_id: ctx.approval_id ?? "",
-          step_index: 0,
-          total_steps: ctx.total_steps ?? 0,
-          approver_name: "",
-          approver_channel: "email",
-          approver_target: "",
           final_status: resultStatus,
         })
       }

@@ -150,6 +150,7 @@ export interface FormSettings {
   attendance_id_field?: string
   attendance_direction_field?: string
   title_align?: "right" | "center" | "left"
+  hide_branding?: boolean         // hide "מופעל על ידי אמרל טפסים" in public/embed views
   approval_workflow?: ApprovalWorkflow
   approval_field_visibility?: ApprovalFieldVisibility
 }

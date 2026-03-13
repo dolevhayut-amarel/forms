@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { initializeApprovalForResponse } from "@/lib/actions/approvals"
+import { fireWebhooks } from "@/lib/actions/webhooks"
 import { rowToResponse, type FormResponse } from "@/lib/types"
 
 export async function submitResponse(
@@ -20,6 +21,12 @@ export async function submitResponse(
   if (error) return { error: error.message }
 
   if (inserted?.id) {
+    // Fire response_submitted webhooks (non-blocking)
+    fireWebhooks(formId, "response_submitted", {
+      response_id: inserted.id as string,
+      response_data: data,
+    }).catch(() => {})
+
     const result = await initializeApprovalForResponse(inserted.id as string)
     if (!result.created && result.reason && result.reason !== "workflow_disabled" && result.reason !== "not_approval_form") {
       return { success: true, warning: "התגובה נשמרה אך יצירת סבב האישור נכשלה." }

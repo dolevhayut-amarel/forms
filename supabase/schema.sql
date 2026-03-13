@@ -426,6 +426,64 @@ create policy "response_approval_events_select_owner" on response_approval_event
 );
 
 -- ─────────────────────────────────────────────
+-- WEBHOOK tables
+-- ─────────────────────────────────────────────
+create table if not exists form_webhooks (
+  id          uuid primary key default gen_random_uuid(),
+  form_id     uuid not null references forms(id) on delete cascade,
+  url         text not null,
+  events      text[] not null default '{}',
+  is_active   boolean not null default true,
+  secret      text,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+drop trigger if exists form_webhooks_updated_at on form_webhooks;
+create trigger form_webhooks_updated_at
+  before update on form_webhooks
+  for each row execute function update_updated_at_column();
+
+create table if not exists webhook_logs (
+  id            uuid primary key default gen_random_uuid(),
+  webhook_id    uuid not null references form_webhooks(id) on delete cascade,
+  form_id       uuid not null references forms(id) on delete cascade,
+  event         text not null,
+  payload       jsonb not null default '{}'::jsonb,
+  status_code   integer,
+  response_body text,
+  error         text,
+  created_at    timestamptz not null default now()
+);
+
+alter table form_webhooks enable row level security;
+alter table webhook_logs enable row level security;
+
+drop policy if exists "form_webhooks_select_owner" on form_webhooks;
+create policy "form_webhooks_select_owner" on form_webhooks for select using (
+  exists (select 1 from forms where forms.id = form_webhooks.form_id and forms.user_id = auth.uid())
+);
+drop policy if exists "form_webhooks_insert_owner" on form_webhooks;
+create policy "form_webhooks_insert_owner" on form_webhooks for insert with check (
+  exists (select 1 from forms where forms.id = form_webhooks.form_id and forms.user_id = auth.uid())
+);
+drop policy if exists "form_webhooks_update_owner" on form_webhooks;
+create policy "form_webhooks_update_owner" on form_webhooks for update using (
+  exists (select 1 from forms where forms.id = form_webhooks.form_id and forms.user_id = auth.uid())
+);
+drop policy if exists "form_webhooks_delete_owner" on form_webhooks;
+create policy "form_webhooks_delete_owner" on form_webhooks for delete using (
+  exists (select 1 from forms where forms.id = form_webhooks.form_id and forms.user_id = auth.uid())
+);
+
+drop policy if exists "webhook_logs_select_owner" on webhook_logs;
+create policy "webhook_logs_select_owner" on webhook_logs for select using (
+  exists (select 1 from forms where forms.id = webhook_logs.form_id and forms.user_id = auth.uid())
+);
+drop policy if exists "webhook_logs_insert_service" on webhook_logs;
+create policy "webhook_logs_insert_service" on webhook_logs for insert with check (true);
+
+-- ─────────────────────────────────────────────
 -- INDEXES
 -- ─────────────────────────────────────────────
 create index if not exists forms_user_id_idx on forms(user_id);
@@ -437,3 +495,7 @@ create index if not exists response_approvals_response_id_idx on response_approv
 create index if not exists response_approval_steps_approval_id_idx on response_approval_steps(response_approval_id);
 create index if not exists response_approval_steps_token_hash_idx on response_approval_steps(token_hash);
 create index if not exists response_approval_events_approval_id_idx on response_approval_events(response_approval_id);
+create index if not exists form_webhooks_form_id_idx on form_webhooks(form_id);
+create index if not exists webhook_logs_webhook_id_idx on webhook_logs(webhook_id);
+create index if not exists webhook_logs_form_id_idx on webhook_logs(form_id);
+create index if not exists webhook_logs_created_at_idx on webhook_logs(created_at desc);

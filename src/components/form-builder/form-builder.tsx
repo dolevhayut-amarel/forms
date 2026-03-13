@@ -42,6 +42,8 @@ import {
   Trash2,
   ClipboardCheck,
   Database,
+  Code,
+  Webhook,
   Sparkles as SparklesIcon,
 } from "lucide-react"
 import Link from "next/link"
@@ -87,6 +89,8 @@ import {
 } from "@/lib/types"
 import { DatasetEditor } from "./dataset-editor"
 import { AiChatPanel } from "./ai-chat-panel"
+import { EmbedDialog } from "./embed-dialog"
+import { WebhooksPanel } from "./webhooks-panel"
 
 interface FormBuilderProps {
   initialForm?: Form
@@ -141,7 +145,11 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
     (initialForm?.schema?.datasets as FormDataset[] | undefined) ?? []
   )
   const [editingDatasetId, setEditingDatasetId] = useState<string | null>(null)
+  const [hideBranding, setHideBranding] = useState(
+    initialForm?.settings?.hide_branding ?? false
+  )
   const [aiChatOpen, setAiChatOpen] = useState(false)
+  const [embedDialogOpen, setEmbedDialogOpen] = useState(false)
 
   const isEditing = !!initialForm
 
@@ -312,6 +320,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
             after_submit: afterSubmit,
             redirect_url: afterSubmit === "redirect" ? redirectUrl.trim() || undefined : undefined,
             title_align: titleAlign,
+            hide_branding: hideBranding || undefined,
             ...(dirField && { attendance_direction_field: dirField.id }),
             ...(idField && { attendance_id_field: idField.id }),
             ...(formType === "approval" ? {
@@ -364,7 +373,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
         setPublishing(false)
       }
     },
-    [name, description, fields, formType, submitLabel, afterSubmit, redirectUrl, titleAlign, approvalSteps, approvalVisMode, getFieldOptions, datasets, isEditing, initialForm, router]
+    [name, description, fields, formType, submitLabel, afterSubmit, redirectUrl, titleAlign, hideBranding, approvalSteps, approvalVisMode, getFieldOptions, datasets, isEditing, initialForm, router]
   )
 
   return (
@@ -450,6 +459,18 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
                   <BarChart2 className="h-3.5 w-3.5" />
                   תוצאות
                 </Link>
+              </Button>
+            )}
+
+            {isEditing && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEmbedDialogOpen(true)}
+                className="rounded-xl gap-1.5 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10 hidden sm:flex"
+              >
+                <Code className="h-3.5 w-3.5" />
+                הטמעה
               </Button>
             )}
 
@@ -769,6 +790,19 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
 
                   <Separator />
 
+                  {/* Hide branding */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={hideBranding}
+                        onCheckedChange={(checked) => setHideBranding(Boolean(checked))}
+                      />
+                      <span className="text-xs text-neutral-700">הסתר ברנדינג (״מופעל על ידי אמרל טפסים״)</span>
+                    </label>
+                  </div>
+
+                  <Separator />
+
                   {/* Datasets (mini databases) */}
                   <div className="space-y-2">
                     <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide flex items-center gap-1.5">
@@ -835,6 +869,19 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
                       הוסף מאגר מידע
                     </Button>
                   </div>
+
+                  {isEditing && initialForm && (
+                    <>
+                      <Separator />
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-neutral-600 uppercase tracking-wide flex items-center gap-1.5">
+                          <Webhook className="h-3.5 w-3.5" />
+                          Webhooks
+                        </Label>
+                        <WebhooksPanel formId={initialForm.id} />
+                      </div>
+                    </>
+                  )}
 
                   <Separator />
 
@@ -994,6 +1041,14 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
         fields={fields}
         onFieldsUpdate={setFields}
       />
+
+      {isEditing && initialForm && (
+        <EmbedDialog
+          open={embedDialogOpen}
+          onOpenChange={setEmbedDialogOpen}
+          formId={initialForm.id}
+        />
+      )}
 
       {editingDatasetId && (() => {
         const ds = datasets.find((d) => d.id === editingDatasetId)

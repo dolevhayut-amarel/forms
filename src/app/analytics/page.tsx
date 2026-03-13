@@ -20,8 +20,9 @@ import { ResponsesOverTimeChart } from "@/components/analytics/responses-over-ti
 import { FormsLeaderboard } from "@/components/analytics/forms-leaderboard"
 import { DayOfWeekChart } from "@/components/analytics/day-of-week-chart"
 import { DateRangeFilter } from "@/components/analytics/date-range-filter"
+import { FormFilter } from "@/components/analytics/form-filter"
 import { createClient } from "@/lib/supabase/server"
-import { rowToForm, rowToResponse } from "@/lib/types"
+import { rowToForm, rowToResponse, isLayoutField } from "@/lib/types"
 import {
   computeKPIs,
   buildTimeSeries,
@@ -74,9 +75,10 @@ function KpiCard({
 }
 
 export default async function AnalyticsPage({ searchParams }: Props) {
-  const { days: daysParam } = await searchParams
+  const { days: daysParam, form: formParam } = await searchParams
   const days = parseInt(daysParam ?? "30", 10)
   const validDays = [7, 14, 30, 90].includes(days) ? days : 30
+  const selectedFormId = formParam ?? "all"
 
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -128,9 +130,20 @@ export default async function AnalyticsPage({ searchParams }: Props) {
   }
 
   const kpis = computeKPIs(forms, allTimeResponses)
-  const timeSeries = buildTimeSeries(responses, validDays)
+  const timeSeries = buildTimeSeries(
+    responses,
+    validDays,
+    selectedFormId !== "all" ? selectedFormId : undefined
+  )
   const formStats = buildFormStats(forms, allTimeResponses)
   const dayOfWeek = buildDayOfWeekStats(responses)
+
+  const selectedForm = selectedFormId !== "all"
+    ? forms.find((f: ReturnType<typeof rowToForm>) => f.id === selectedFormId)
+    : null
+  const selectedFormResponses = selectedForm
+    ? allTimeResponses.filter((r: ReturnType<typeof rowToResponse>) => r.form_id === selectedForm.id)
+    : null
 
   const windowLabel =
     validDays === 7
@@ -153,9 +166,17 @@ export default async function AnalyticsPage({ searchParams }: Props) {
             <h1 className="text-xl font-semibold text-neutral-900">אנליטיקס</h1>
             <p className="text-sm text-neutral-500 mt-0.5">{windowLabel}</p>
           </div>
-          <Suspense>
-            <DateRangeFilter current={String(validDays)} />
-          </Suspense>
+          <div className="flex items-center gap-2">
+            <Suspense>
+              <FormFilter
+                forms={forms.map((f: ReturnType<typeof rowToForm>) => ({ id: f.id, name: f.name }))}
+                current={selectedFormId}
+              />
+            </Suspense>
+            <Suspense>
+              <DateRangeFilter current={String(validDays)} />
+            </Suspense>
+          </div>
         </div>
 
         {/* KPI cards */}
@@ -205,7 +226,14 @@ export default async function AnalyticsPage({ searchParams }: Props) {
           <div className="lg:col-span-2 bg-white rounded-2xl border border-neutral-200 p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-sm font-semibold text-neutral-800">תגובות לאורך זמן</h2>
+                <h2 className="text-sm font-semibold text-neutral-800">
+                  תגובות לאורך זמן
+                  {selectedForm && (
+                    <span className="text-xs font-normal text-neutral-400 me-2">
+                      — {selectedForm.name}
+                    </span>
+                  )}
+                </h2>
                 <p className="text-xs text-neutral-400 mt-0.5">{windowLabel}</p>
               </div>
               <BarChart3 className="h-4 w-4 text-neutral-300" />
@@ -332,6 +360,60 @@ export default async function AnalyticsPage({ searchParams }: Props) {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
+                      </span>
+                    </div>
+                  )
+                })}
+            </div>
+          </div>
+        )}
+        {/* Response rate per field (when a specific form is selected) */}
+        {selectedForm && selectedFormResponses && selectedFormResponses.length > 0 && (
+          <div className="bg-white rounded-2xl border border-neutral-200 p-5">
+            <h2 className="text-sm font-semibold text-neutral-800 mb-4">
+              שיעור מענה לפי שדה
+              <span className="text-xs font-normal text-neutral-400 me-2">
+                — {selectedForm.name}
+              </span>
+            </h2>
+            <div className="space-y-0">
+              {selectedForm.fields
+                .filter((f: { type: string }) => !isLayoutField(f.type as import("@/lib/types").FieldType))
+                .map((f: { id: string; label: string }, i: number, arr: { id: string; label: string }[]) => {
+                  const answered = selectedFormResponses.filter(
+                    (r: ReturnType<typeof rowToResponse>) => {
+                      const val = r.data[f.id]
+                      if (!val) return false
+                      if (Array.isArray(val)) return val.length > 0
+                      return (val as string).trim().length > 0
+                    }
+                  ).length
+                  const totalResp = selectedFormResponses.length
+                  const pct = totalResp > 0 ? Math.round((answered / totalResp) * 100) : 0
+
+                  return (
+                    <div
+                      key={f.id}
+                      className={`flex items-center gap-3 py-2.5 ${
+                        i < arr.length - 1 ? "border-b border-neutral-50" : ""
+                      }`}
+                    >
+                      <p className="flex-1 text-sm text-neutral-700 truncate min-w-0">
+                        {f.label || "ללא שם"}
+                      </p>
+                      <div className="w-24 shrink-0">
+                        <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-500 rounded-full"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className="text-xs text-neutral-400 w-12 shrink-0 text-end">
+                        {pct}%
+                      </span>
+                      <span className="text-xs text-neutral-300 w-16 shrink-0 text-end">
+                        {answered}/{totalResp}
                       </span>
                     </div>
                   )
