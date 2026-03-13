@@ -49,7 +49,7 @@ const inputStyle = {
       outline: "none",
       color: "hsl(var(--foreground))",
       background: "transparent",
-      resize: "none",
+      resize: "none" as const,
     },
   },
   suggestions: {
@@ -96,7 +96,6 @@ export function PromptEditor({
       placeholder={placeholder}
       dir={dir}
       style={inputStyle}
-      // @ts-expect-error — react-mentions supports string|RegExp trigger
       allowSuggestionsAboveCursor
       a11ySuggestionsListLabel="שדות זמינים"
     >
