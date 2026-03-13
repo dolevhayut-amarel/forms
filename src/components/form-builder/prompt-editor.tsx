@@ -112,7 +112,7 @@ export function PromptEditor({
           minHeight: 120,
           background: "transparent",
           color: "transparent",
-          caretColor: "hsl(var(--foreground))",
+          caretColor: "#111827",
           resize: "none",
           border: "none",
           outline: "none",
