@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ResponsesTable } from "@/components/results/responses-table"
 import { FieldStats } from "@/components/results/field-stats"
+import { ExportButton } from "@/components/results/export-button"
 import { CopyLinkButton } from "@/components/results/copy-link-button"
 import { ShareFormDialog } from "@/components/results/share-form-dialog"
 import { AppHeader } from "@/components/layout/amarel-nav"
@@ -160,7 +161,16 @@ export default async function ResultsPage({ params }: Props) {
 
         {/* Table */}
         <div>
-          <h2 className="text-sm font-semibold text-neutral-700 mb-4">כל התגובות</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-neutral-700">כל התגובות</h2>
+            <ExportButton
+              fields={form.fields}
+              responses={responses}
+              formName={form.name}
+              approvalsByResponseId={approvalsByResponseId}
+              showApprovalColumns={isApproval}
+            />
+          </div>
           <ResponsesTable
             fields={form.fields}
             responses={responses}

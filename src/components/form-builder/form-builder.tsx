@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { nanoid } from "nanoid"
 import { toast } from "sonner"
@@ -45,6 +45,8 @@ import {
   Code,
   Webhook,
   Sparkles as SparklesIcon,
+  Undo2,
+  Redo2,
 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -91,6 +93,8 @@ import { DatasetEditor } from "./dataset-editor"
 import { AiChatPanel } from "./ai-chat-panel"
 import { EmbedDialog } from "./embed-dialog"
 import { WebhooksPanel } from "./webhooks-panel"
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes"
+import { useHistory } from "@/hooks/use-history"
 
 interface FormBuilderProps {
   initialForm?: Form
@@ -112,7 +116,7 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
   const router = useRouter()
   const [name, setName] = useState(initialForm?.name ?? "")
   const [description, setDescription] = useState(initialForm?.description ?? "")
-  const [fields, setFields] = useState<FieldConfig[]>(initialForm?.fields ?? [])
+  const { value: fields, set: setFields, undo, redo, canUndo, canRedo } = useHistory<FieldConfig[]>(initialForm?.fields ?? [])
   const [formType, setFormType] = useState<FormType>(initialForm?.form_type ?? "general")
   const [submitLabel, setSubmitLabel] = useState(
     initialForm?.settings?.submit_label ?? ""
@@ -152,6 +156,54 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
   const [embedDialogOpen, setEmbedDialogOpen] = useState(false)
 
   const isEditing = !!initialForm
+
+  // Snapshot of last-saved state for dirty detection
+  const savedSnapshotRef = useRef(
+    JSON.stringify({
+      name: initialForm?.name ?? "",
+      description: initialForm?.description ?? "",
+      fields: initialForm?.fields ?? [],
+      formType: initialForm?.form_type ?? "general",
+      submitLabel: initialForm?.settings?.submit_label ?? "",
+      afterSubmit: initialForm?.settings?.after_submit ?? "thank_you",
+      redirectUrl: initialForm?.settings?.redirect_url ?? "",
+      titleAlign: initialForm?.settings?.title_align ?? "right",
+      hideBranding: initialForm?.settings?.hide_branding ?? false,
+    })
+  )
+
+  const isDirty = useMemo(() => {
+    const current = JSON.stringify({
+      name, description, fields, formType, submitLabel,
+      afterSubmit, redirectUrl, titleAlign, hideBranding,
+    })
+    return current !== savedSnapshotRef.current
+  }, [name, description, fields, formType, submitLabel, afterSubmit, redirectUrl, titleAlign, hideBranding])
+
+  useUnsavedChanges(isDirty)
+
+  // Keyboard shortcuts: Ctrl/Cmd+Z for undo, Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y for redo
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const mod = e.metaKey || e.ctrlKey
+      if (!mod) return
+
+      const target = e.target as HTMLElement
+      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable
+      if (isInput) return
+
+      if (e.key === "z" && !e.shiftKey) {
+        e.preventDefault()
+        undo()
+      } else if ((e.key === "z" && e.shiftKey) || e.key === "y") {
+        e.preventDefault()
+        redo()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [undo, redo])
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -359,6 +411,12 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
           return
         }
 
+        // Reset dirty state after successful save
+        savedSnapshotRef.current = JSON.stringify({
+          name, description, fields, formType, submitLabel,
+          afterSubmit, redirectUrl, titleAlign, hideBranding,
+        })
+
         if (publish !== undefined) {
           setIsPublished(publish)
           toast.success(publish ? "הטופס פורסם!" : "הטופס הוסר מפרסום")
@@ -415,6 +473,12 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
                   <ClipboardCheck className="h-3 w-3 me-1" />
                   סבב אישורים
                 </Badge>
+              )}
+              {isDirty && (
+                <span className="flex items-center gap-1 text-[10px] text-amber-300/80 shrink-0">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  לא נשמר
+                </span>
               )}
             </div>
           </div>
@@ -501,6 +565,32 @@ export function FormBuilder({ initialForm }: FormBuilderProps) {
               <SparklesIcon className="h-3.5 w-3.5" />
               AI
             </Button>
+
+            <div className="w-px h-5 bg-white/15 hidden sm:block" />
+
+            {/* Undo / Redo */}
+            <div className="flex items-center gap-0.5 hidden sm:flex">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={undo}
+                disabled={!canUndo}
+                title="ביטול (Ctrl+Z)"
+                className="h-8 w-8 rounded-xl text-white/60 hover:text-white hover:bg-white/10 disabled:text-white/20 disabled:hover:bg-transparent"
+              >
+                <Undo2 className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={redo}
+                disabled={!canRedo}
+                title="שחזור (Ctrl+Shift+Z)"
+                className="h-8 w-8 rounded-xl text-white/60 hover:text-white hover:bg-white/10 disabled:text-white/20 disabled:hover:bg-transparent"
+              >
+                <Redo2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
 
             <Button
               variant="ghost"
